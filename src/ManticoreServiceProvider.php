@@ -23,6 +23,10 @@ class ManticoreServiceProvider extends ServiceProvider
             $this->commands([
                 IndexCommand::class,
             ]);
+
+            $this->publishes([
+                __DIR__.'/../config/manticore.php' => $this->app['path.config'].DIRECTORY_SEPARATOR.'manticore.php',
+            ]);
         }
     }
 }
