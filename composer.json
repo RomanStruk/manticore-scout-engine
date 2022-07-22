@@ -1,0 +1,52 @@
+{
+    "name": "romanstruk/manticore-scout-engine",
+    "description": "Laravel Manticore Scout Engine",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Roman",
+            "email": "romanuch4@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "illuminate/support": "~7|~8",
+        "manticoresoftware/manticoresearch-php": "^2.1",
+        "laravel/scout": "^9.4"
+    },
+    "require-dev": {
+        "orchestra/testbench": "6.x",
+        "phpunit/phpunit": "^9.3",
+        "nunomaduro/collision": "v5.x-dev",
+        "nunomaduro/phpinsights": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "RomanStruk\\ManticoreScoutEngine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RomanStruk\\ManticoreScoutEngine\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RomanStruk\\ManticoreScoutEngine\\ManticoreServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "scripts": {
+        "test": "phpunit --colors=always",
+        "test-f": "phpunit --colors=always --filter",
+        "ins": "./vendor/bin/phpinsights"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
