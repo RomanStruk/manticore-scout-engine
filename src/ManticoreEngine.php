@@ -14,10 +14,12 @@ use Manticoresearch\Search;
 class ManticoreEngine extends Engine
 {
     protected Client $manticore;
+    protected ?int $maxMatches;
 
     public function __construct(array $config)
     {
-        $this->manticore = new Client($config);
+        $this->manticore = new Client($config['connection']);
+        $this->maxMatches = $config['max_matches'];
     }
 
     /**
@@ -61,11 +63,12 @@ class ManticoreEngine extends Engine
 
     public function search(Builder $builder)
     {
-        return $this->performSearch($builder, [
+        return $this->performSearch($builder, array_filter([
             'filter' => $this->filters($builder),
-            'limit' => $builder->limit ?: 100,
+            'limit' => $builder->limit,
             'sort' => $this->buildSortFromOrderByClauses($builder),
-        ]);
+            'maxMatches' => $this->getMaxMatches($builder->limit)
+        ]));
     }
 
     /**
@@ -87,7 +90,7 @@ class ManticoreEngine extends Engine
                 $searchParams
             );
 
-            return $result instanceof Search ? $result->get() : $result;
+            return ($result instanceof Search ? $result->get() : $result)->getResponse()->getResponse();
         }
         $manticore = $manticore->search($builder->query);
 
@@ -104,7 +107,7 @@ class ManticoreEngine extends Engine
             }
         }
 
-        return $manticore->get();
+        return $manticore->get()->getResponse()->getResponse();
     }
 
     /**
@@ -116,53 +119,47 @@ class ManticoreEngine extends Engine
      */
     public function paginate(Builder $builder, $perPage, $page)
     {
+        $offset = ($page - 1) * $perPage;
         return $this->performSearch($builder, array_filter([
             'filters' => $this->filters($builder),
             'limit' => (int)$perPage,
-            'offset' => ($page - 1) * $perPage,
+            'offset' => $offset,
             'sort' => $this->buildSortFromOrderByClauses($builder),
+            'maxMatches' => $this->getMaxMatches($offset + $perPage)
         ]));
     }
 
     /**
      * Pluck and return the primary keys of the given results.
      *
-     * @param ResultSet $results
+     * @param array $results
      * @return \Illuminate\Support\Collection
      */
     public function mapIds($results)
     {
-        if ($results->getTotal() === 0) {
+        if ($results['hits']['total'] === 0) {
             return collect();
         }
 
-        $objectIds = [];
-        while ($results->valid()) {
-            $objectIds[] = $results->current()->getId();
-            $results->next();
-        }
-        return collect($objectIds);
+        return collect($results['hits']['hits'])->pluck('_id');
     }
 
     /**
      * Map the given results to instances of the given model.
      *
      * @param Builder $builder
-     * @param ResultSet $results
+     * @param array $results
      * @param Model $model
      * @return Collection
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if ($results->getTotal() === 0) {
+        if ($results['hits']['total'] === 0) {
             return $model->newCollection();
         }
 
-        $objectIds = [];
-        while ($results->valid()) {
-            $objectIds[] = $results->current()->getId();
-            $results->next();
-        }
+        $objectIds = collect($results['hits']['hits'])->pluck('_id')->all();
+
         $objectIdPositions = array_flip($objectIds);
 
         return $model->getScoutModelsByIds(
@@ -178,21 +175,18 @@ class ManticoreEngine extends Engine
      * Map the given results to instances of the given model via a lazy collection.
      *
      * @param Builder $builder
-     * @param ResultSet $results
+     * @param array $results
      * @param Model $model
      * @return LazyCollection
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if ($results->getTotal() === 0) {
+        if ($results['hits']['total'] === 0) {
             return LazyCollection::make($model->newCollection());
         }
 
-        $objectIds = [];
-        while ($results->valid()) {
-            $objectIds[] = $results->current()->getId();
-            $results->next();
-        }
+        $objectIds = collect($results['hits']['hits'])->pluck('_id')->all();
+
         $objectIdPositions = array_flip($objectIds);
 
         return $model->queryScoutModelsByIds(
@@ -207,12 +201,12 @@ class ManticoreEngine extends Engine
     /**
      * Get the total count from a raw result returned by the engine.
      *
-     * @param ResultSet $results
+     * @param array $results
      * @return int
      */
     public function getTotalCount($results): int
     {
-        return $results->getTotal();
+        return $results['hits']['total'];
     }
 
     /**
@@ -300,5 +294,20 @@ class ManticoreEngine extends Engine
         return collect($builder->orders)->map(function (array $order) {
             return [$order['column'], $order['direction']];
         })->toArray();
+    }
+
+    /**
+     * Get the max_matches option.
+     *
+     * @param ?int $max
+     * @return int|null
+     */
+    protected function getMaxMatches(?int $max): ?int
+    {
+        if (!is_null($this->maxMatches)){
+            return $this->maxMatches;
+        }
+
+        return $max;
     }
 }

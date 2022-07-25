@@ -16,7 +16,7 @@ class ManticoreServiceProvider extends ServiceProvider
     public function boot()
     {
         resolve(EngineManager::class)->extend('manticore', function () {
-            return new ManticoreEngine(config('manticore.manticore'));
+            return new ManticoreEngine(config('manticore'));
         });
 
         if ($this->app->runningInConsole()) {
