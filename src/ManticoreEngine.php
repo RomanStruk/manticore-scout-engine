@@ -69,7 +69,7 @@ class ManticoreEngine extends Engine
         return $this->performSearch($builder, array_filter([
             'where' => $builder->wheres,
             'whereIn' => $builder->whereIns,
-            'whereRaw' => $builder->whereRaws,
+            'whereRaw' => property_exists($builder, 'whereRaws') ? $builder->whereRaws : [],
             'limit' => $builder->limit,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
         ]));
@@ -144,7 +144,7 @@ class ManticoreEngine extends Engine
         return $this->performSearch($builder, array_filter([
             'where' => $builder->wheres,
             'whereIn' => $builder->whereIns,
-            'whereRaw' => $builder->whereRaws,
+            'whereRaw' => property_exists($builder, 'whereRaws') ? $builder->whereRaws : [],
             'limit' => $perPage,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
             'offset' => $offset,

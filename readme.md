@@ -24,6 +24,11 @@ Run artisan command for create Manticore index
 php artisan manticore:index
 ```
 
+Manticore allows you to add "whereRaw" methods to your search queries.
+```php
+$products = Product::search('Brand Name')->whereRaw('category_id ANY (?, ?, ?)', ['1', '2', '3'])->get();
+```
+
 ## Change log
 
 Please see the [changelog](changelog.md) for more information on what has changed recently.
