@@ -2,6 +2,7 @@
 
 namespace RomanStruk\ManticoreScoutEngine;
 
+use Laravel\Scout\Builder;
 use RomanStruk\ManticoreScoutEngine\Console\IndexCommand;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Scout\EngineManager;
@@ -17,6 +18,11 @@ class ManticoreServiceProvider extends ServiceProvider
     {
         resolve(EngineManager::class)->extend('manticore', function () {
             return new ManticoreEngine(config('manticore'));
+        });
+
+        Builder::macro('whereRaw', function ($sql, $bindings = []) {
+            $this->whereRaws[$sql] = $bindings;
+            return $this;
         });
 
         if ($this->app->runningInConsole()) {

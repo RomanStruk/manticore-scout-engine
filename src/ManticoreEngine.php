@@ -4,22 +4,23 @@ namespace RomanStruk\ManticoreScoutEngine;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Manticoresearch\Client;
-use Manticoresearch\ResultSet;
-use Manticoresearch\Search;
 
 class ManticoreEngine extends Engine
 {
     protected Client $manticore;
-    protected ?int $maxMatches;
+    protected array $options = [
+        'max_matches' => 1000,
+    ];
 
     public function __construct(array $config)
     {
         $this->manticore = new Client($config['connection']);
-        $this->maxMatches = $config['max_matches'];
+        $this->options['max_matches'] = $config['max_matches'];
     }
 
     /**
@@ -63,11 +64,14 @@ class ManticoreEngine extends Engine
 
     public function search(Builder $builder)
     {
+        $this->options['max_matches'] = $this->getMaxMatches($builder->limit);
+
         return $this->performSearch($builder, array_filter([
-            'filter' => $this->filters($builder),
+            'where' => $builder->wheres,
+            'whereIn' => $builder->whereIns,
+            'whereRaw' => $builder->whereRaws,
             'limit' => $builder->limit,
-            'sort' => $this->buildSortFromOrderByClauses($builder),
-            'maxMatches' => $this->getMaxMatches($builder->limit)
+            'orderBy' => $this->buildSortFromOrderByClauses($builder),
         ]));
     }
 
@@ -78,36 +82,50 @@ class ManticoreEngine extends Engine
      * @param array $searchParams
      * @return mixed
      */
-    protected function performSearch(Builder $builder, array $searchParams = [])
+    protected function performSearch(Builder $builder, array $searchParams)
     {
-        $manticore = $this->manticore->index($builder->index ?: $builder->model->searchableAs());
+        $this->options = array_merge($this->options, $builder->model->scoutMetadata());
+        $option = collect($this->options)->map(fn($v, $k) => $k . '=' . $v)->implode(', ');
+
+        $manticoreQuery = DB::table($builder->index ?: $builder->model->searchableAs());
 
         if ($builder->callback) {
             $result = call_user_func(
                 $builder->callback,
-                $manticore,
+                $manticoreQuery,
                 $builder->query,
-                $searchParams
+                []
             );
-
-            return ($result instanceof Search ? $result->get() : $result)->getResponse()->getResponse();
-        }
-        $manticore = $manticore->search($builder->query);
-
-        foreach ($searchParams as $name => $option) {
-            if (empty($option)){
-                continue;
+            if ($result instanceof \Illuminate\Database\Query\Builder) {
+                return $this->manticore->sql([
+                    'body' => [
+                        'query' => $this->getEloquentSqlWithBindings($result) . " OPTION {$option};"
+                    ]
+                ]);
             }
-            if (is_array($option)) {
-                foreach ($option as $params) {
-                    $manticore->{$name}(...$params);
+
+            return $result;
+        }
+        foreach ($searchParams as $method => $searchParam) {
+            if (is_array($searchParam)) {
+                foreach ($searchParam as $key => $value) {
+                    $manticoreQuery->{$method}($key, $value);
                 }
             } else {
-                $manticore->{$name}($option);
+                $manticoreQuery->{$method}($searchParam);
             }
         }
+        if ($builder->query !== '') {
+            $manticoreQuery->whereRaw("MATCH(?)", [$builder->query]);
+        }
 
-        return $manticore->get()->getResponse()->getResponse();
+        $query = $this->getEloquentSqlWithBindings($manticoreQuery) . " OPTION {$option};";
+
+        return $this->manticore->sql([
+            'body' => [
+                'query' => $query
+            ]
+        ]);
     }
 
     /**
@@ -120,12 +138,16 @@ class ManticoreEngine extends Engine
     public function paginate(Builder $builder, $perPage, $page)
     {
         $offset = ($page - 1) * $perPage;
+
+        $this->options['max_matches'] = $this->getMaxMatches($offset + $perPage);
+
         return $this->performSearch($builder, array_filter([
-            'filters' => $this->filters($builder),
-            'limit' => (int)$perPage,
+            'where' => $builder->wheres,
+            'whereIn' => $builder->whereIns,
+            'whereRaw' => $builder->whereRaws,
+            'limit' => $perPage,
+            'orderBy' => $this->buildSortFromOrderByClauses($builder),
             'offset' => $offset,
-            'sort' => $this->buildSortFromOrderByClauses($builder),
-            'maxMatches' => $this->getMaxMatches($offset + $perPage)
         ]));
     }
 
@@ -291,8 +313,8 @@ class ManticoreEngine extends Engine
      */
     protected function buildSortFromOrderByClauses(Builder $builder): array
     {
-        return collect($builder->orders)->map(function (array $order) {
-            return [$order['column'], $order['direction']];
+        return collect($builder->orders)->mapWithKeys(function (array $order) {
+            return [$order['column'] => $order['direction']];
         })->toArray();
     }
 
@@ -304,10 +326,24 @@ class ManticoreEngine extends Engine
      */
     protected function getMaxMatches(?int $max): ?int
     {
-        if (!is_null($this->maxMatches)){
-            return $this->maxMatches;
+        if (!is_null($this->options['max_matches'])) {
+            return $this->options['max_matches'];
         }
 
         return $max;
+    }
+
+    /**
+     * Combines SQL and its bindings
+     *
+     * @param \Illuminate\Database\Query\Builder $query
+     * @return string
+     */
+    public function getEloquentSqlWithBindings(\Illuminate\Database\Query\Builder $query)
+    {
+        return vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
+            return is_string($binding) ? "'" . addslashes($binding) . "'" : $binding;
+        })->toArray());
+
     }
 }

@@ -38,7 +38,7 @@ class IndexCommand extends Command
 
             $model = new $class;
 
-            $options = $model->scoutMetadata();
+            $options = $model->scoutIndexMigration();
             $name = $model->searchableAs();
 
             $engine->createIndex($name, $options);
