@@ -27,6 +27,7 @@ class IndexCommand extends Command
      * Execute the console command.
      *
      * @param EngineManager $manager
+     *
      * @return void
      */
     public function handle(EngineManager $manager)
@@ -36,7 +37,7 @@ class IndexCommand extends Command
         try {
             $class = $this->argument('model');
 
-            $model = new $class;
+            $model = new $class();
 
             $options = $model->scoutIndexMigration();
             $name = $model->searchableAs();

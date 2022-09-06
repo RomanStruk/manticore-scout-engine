@@ -27,6 +27,7 @@ class ManticoreEngine extends Engine
      * Update the given model in the index.
      *
      * @param Collection $models
+     *
      * @return void
      */
     public function update($models)
@@ -50,6 +51,7 @@ class ManticoreEngine extends Engine
      * Remove the given model from the index.
      *
      * @param Collection $models
+     *
      * @return void
      */
     public function delete($models)
@@ -80,6 +82,7 @@ class ManticoreEngine extends Engine
      *
      * @param Builder $builder
      * @param array $searchParams
+     *
      * @return mixed
      */
     protected function performSearch(Builder $builder, array $searchParams)
@@ -99,8 +102,8 @@ class ManticoreEngine extends Engine
             if ($result instanceof \Illuminate\Database\Query\Builder) {
                 return $this->manticore->sql([
                     'body' => [
-                        'query' => $this->getEloquentSqlWithBindings($result) . " OPTION {$option};"
-                    ]
+                        'query' => $this->getEloquentSqlWithBindings($result) . " OPTION {$option};",
+                    ],
                 ]);
             }
 
@@ -123,8 +126,8 @@ class ManticoreEngine extends Engine
 
         return $this->manticore->sql([
             'body' => [
-                'query' => $query
-            ]
+                'query' => $query,
+            ],
         ]);
     }
 
@@ -133,6 +136,7 @@ class ManticoreEngine extends Engine
      *
      * @param int $perPage
      * @param int $page
+     *
      * @return mixed
      */
     public function paginate(Builder $builder, $perPage, $page)
@@ -155,6 +159,7 @@ class ManticoreEngine extends Engine
      * Pluck and return the primary keys of the given results.
      *
      * @param array $results
+     *
      * @return \Illuminate\Support\Collection
      */
     public function mapIds($results)
@@ -172,6 +177,7 @@ class ManticoreEngine extends Engine
      * @param Builder $builder
      * @param array $results
      * @param Model $model
+     *
      * @return Collection
      */
     public function map(Builder $builder, $results, $model): Collection
@@ -199,6 +205,7 @@ class ManticoreEngine extends Engine
      * @param Builder $builder
      * @param array $results
      * @param Model $model
+     *
      * @return LazyCollection
      */
     public function lazyMap(Builder $builder, $results, $model)
@@ -224,6 +231,7 @@ class ManticoreEngine extends Engine
      * Get the total count from a raw result returned by the engine.
      *
      * @param array $results
+     *
      * @return int
      */
     public function getTotalCount($results): int
@@ -235,6 +243,7 @@ class ManticoreEngine extends Engine
      * Flush all of the model's records from the engine.
      *
      * @param Model $model
+     *
      * @return void
      */
     public function flush($model)
@@ -249,6 +258,7 @@ class ManticoreEngine extends Engine
      *
      * @param string $name
      * @param array $options
+     *
      * @return mixed
      */
     public function createIndex($name, array $options = [])
@@ -262,6 +272,7 @@ class ManticoreEngine extends Engine
      * Delete a search index.
      *
      * @param string $name
+     *
      * @return mixed
      */
     public function deleteIndex($name)
@@ -276,6 +287,7 @@ class ManticoreEngine extends Engine
      *
      * @param string $method
      * @param array $parameters
+     *
      * @return mixed
      */
     public function __call(string $method, array $parameters)
@@ -287,6 +299,7 @@ class ManticoreEngine extends Engine
      * Get the filter array for the query.
      *
      * @param Builder $builder
+     *
      * @return array
      */
     protected function filters(Builder $builder): array
@@ -296,7 +309,7 @@ class ManticoreEngine extends Engine
             $filters['filter'] = [$key, 'in', $values,];
         }
         foreach ($builder->wheres as $key => $values) {
-            if (!array_key_exists($key, $builder->model->scoutMetadata())) {
+            if (! array_key_exists($key, $builder->model->scoutMetadata())) {
                 continue;
             }
             $filters['filter'] = [$key, '=', $values,];
@@ -309,6 +322,7 @@ class ManticoreEngine extends Engine
      * Get the sort array for the query.
      *
      * @param Builder $builder
+     *
      * @return array
      */
     protected function buildSortFromOrderByClauses(Builder $builder): array
@@ -322,11 +336,12 @@ class ManticoreEngine extends Engine
      * Get the max_matches option.
      *
      * @param ?int $max
+     *
      * @return int|null
      */
     protected function getMaxMatches(?int $max): ?int
     {
-        if (!is_null($this->options['max_matches'])) {
+        if (! is_null($this->options['max_matches'])) {
             return $this->options['max_matches'];
         }
 
@@ -337,13 +352,27 @@ class ManticoreEngine extends Engine
      * Combines SQL and its bindings
      *
      * @param \Illuminate\Database\Query\Builder $query
+     *
      * @return string
      */
-    public function getEloquentSqlWithBindings(\Illuminate\Database\Query\Builder $query)
+    public function getEloquentSqlWithBindings(\Illuminate\Database\Query\Builder $query): string
     {
         return vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
-            return is_string($binding) ? "'" . addslashes($binding) . "'" : $binding;
+            return is_string($binding) ? "'" . $this->escape($binding) . "'" : $binding;
         })->toArray());
+    }
 
+    /**
+     * Escaping characters in query string
+     */
+    protected function escape(string $binding): string
+    {
+        $binding = str_replace(["\\"], ["\\\\\\\\"], $binding);
+
+        return str_replace(
+            ["'", '!', '"', '$', '(', ')', '-', '/', '<', '@', '^', '|', '~'],
+            ["\'", '\\\!', '\\\"', '\\\$', '\\\(', '\\\)', '\\\-', '\\\/', '\\\<', '\\\@', '\\\^', '\\\|', '\\\~'],
+            $binding
+        );
     }
 }
