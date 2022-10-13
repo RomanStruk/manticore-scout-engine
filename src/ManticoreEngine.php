@@ -265,7 +265,15 @@ class ManticoreEngine extends Engine
     {
         $index = $this->manticore->index($name);
 
-        return $index->create($options);
+        if (!array_key_exists('fields', $options)){
+            throw new \InvalidArgumentException('Manticore migration failed! Option key "fields" not found!');
+        }
+
+        $fields = $options['fields'];
+        $settings = $options['settings'] ?? [];
+        $silent = $options['silent'] ?? false;
+
+        return $index->create($fields, $settings, $silent);
     }
 
     /**

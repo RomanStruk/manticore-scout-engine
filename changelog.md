@@ -2,6 +2,28 @@
 
 All notable changes to `romanstruk/manticore-scout-engine` will be documented in this file.
 
+## Version 3
+
+### 3.0.0 (13.10.2022)
+- Змінений формат міграції
+```php
+    public function scoutIndexMigration(): array
+    {
+        return [
+            'fields' => [
+                'name' => ['type' => 'text'],
+            ],
+            'settings' => [
+                'min_prefix_len' => '3',
+                'min_infix_len' => '3',
+                'prefix_fields' => 'name',
+                'expand_keywords' => '1',
+            ],
+            'silent' => false,
+        ];
+    }
+```
+
 ## Version 2
 
 ### 2.0.1 (28.08.2022)

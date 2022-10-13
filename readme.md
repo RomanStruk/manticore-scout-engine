@@ -21,7 +21,7 @@ Documentation for Scout can be found on the Laravel website.
 
 Run artisan command for create Manticore index
 ```bash
-php artisan manticore:index
+php artisan manticore:index "App\Models\Product"
 ```
 
 Manticore allows you to add "whereRaw" methods to your search queries.
