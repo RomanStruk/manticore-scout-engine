@@ -38,21 +38,19 @@ class ManticoreServiceProvider extends ServiceProvider
             return new ManticoreMysqlEngine(config('manticore'));
         });
 
-        $this->app->afterResolving(ManticoreMysqlEngine::class, function () {
-            $this->app->bind(ManticoreGrammar::class, ManticoreGrammar::class);
+        $this->app->bind(ManticoreGrammar::class, ManticoreGrammar::class);
 
-            $this->app->bind(ManticoreConnection::class, function ($app) {
-                return new ManticoreConnection(
-                    $app->make(ManticoreGrammar::class),
-                    config('manticore.mysql-connection')
-                );
-            });
-            Collection::macro('getFacet', function ($group) {
-                return app(EngineManager::class)->driver('manticore')->getFacet($group);
-            });
-            Collection::macro('getFacets', function () {
-                return app(EngineManager::class)->driver('manticore')->getFacets();
-            });
+        $this->app->bind(ManticoreConnection::class, function ($app) {
+            return new ManticoreConnection(
+                $app->make(ManticoreGrammar::class),
+                config('manticore.mysql-connection')
+            );
+        });
+        Collection::macro('getFacet', function ($group) {
+            return app(EngineManager::class)->driver('manticore')->getFacet($group);
+        });
+        Collection::macro('getFacets', function () {
+            return app(EngineManager::class)->driver('manticore')->getFacets();
         });
     }
 

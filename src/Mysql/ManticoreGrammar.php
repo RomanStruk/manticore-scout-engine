@@ -242,6 +242,18 @@ class ManticoreGrammar extends Grammar
     }
 
     /**
+     * Compile a "where all mva" clause.
+     */
+    protected function whereAnyMva(Builder $query, array $where): string
+    {
+        $value = $this->parameter($where['value']);
+
+        $operator = str_replace('?', '??', $where['operator']);
+
+        return 'any(' . $this->wrap($where['column']) . ')' . $operator . $value;
+    }
+
+    /**
      * Compile a "where all" clause.
      */
     protected function whereAll(Builder $query, array $where): string
@@ -418,14 +430,10 @@ class ManticoreGrammar extends Grammar
      */
     public function prepareBindingsForReplace(array $bindings, array $values): array
     {
-        $values = collect($values)->map(function ($value) {
-            return is_array($value) ? json_encode($value) : $value;
-        })->all();
-
         $cleanBindings = Arr::except($bindings, ['search']);
 
         return array_values(
-            array_merge($values, Arr::flatten($cleanBindings))
+            array_merge(Arr::flatten($values), Arr::flatten($cleanBindings))
         );
     }
 
@@ -457,7 +465,19 @@ class ManticoreGrammar extends Grammar
      */
     protected function compileReplaceValues(Builder $query, array $values): string
     {
-        return collect($values)->map(fn() => '?')->implode(', ');
+        return collect($values)
+            ->map(fn($value) => is_array($value) ? $this->compileReplaceMvaValues($value) : '?')
+            ->implode(', ');
+    }
+
+    /**
+     * Compile the mva columns for a replacement statement.
+     */
+    protected function compileReplaceMvaValues(array $values): string
+    {
+        return '(' . collect($values)
+            ->map(fn($value) => '?')
+            ->implode(', ') . ')';
     }
 
     /**

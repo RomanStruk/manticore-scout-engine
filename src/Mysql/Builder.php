@@ -223,6 +223,22 @@ class Builder
     }
 
     /**
+     * Add a "where any mva" clause to the query.
+     */
+    public function whereAnyMva($column, string $operator,  $value, string $boolean = 'and'): Builder
+    {
+        $type = 'AnyMva';
+
+        $this->wheres[] = compact(
+            'type', 'column', 'operator', 'value', 'boolean'
+        );
+
+        $this->addBinding($value, 'where');
+
+        return $this;
+    }
+
+    /**
      * Set the "limit" for the search query.
      */
     public function take(int $limit): Builder
@@ -361,6 +377,9 @@ class Builder
         );
     }
 
+    /**
+     * Replace records from the database.
+     */
     public function replace($values, int $id)
     {
         $values = array_merge($values, ['id' => $id]);
