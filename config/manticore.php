@@ -15,6 +15,22 @@ return [
         'port' => env('MANTICORE_PORT', '9308'),
     ],
 
+    'mysql-connection' => [
+        'host' => env('MANTICORE_SQL_HOST', '127.0.0.1'),
+        'port' => env('MANTICORE_SQL_PORT', '9306'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manticore default engine
+    |--------------------------------------------------------------------------
+    |
+    | http-client - \Manticoresearch\Client
+    | mysql-builder - \RomanStruk\ManticoreScoutEngine\Builder
+    |
+    */
+    'engine' => env('MANTICORE_ENGINE', 'mysql-builder'),
+
     /*
     |--------------------------------------------------------------------------
     | ManticoreSearch max_matches Configuration
@@ -27,5 +43,6 @@ return [
     | Set null for calculate offset + limit
     |
     */
-    'max_matches' => 1000,
+
+    'paginate_max_matches' => null,
 ];

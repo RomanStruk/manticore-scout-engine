@@ -32,7 +32,7 @@ class IndexCommand extends Command
      */
     public function handle(EngineManager $manager)
     {
-        $engine = $manager->engine();
+        $engine = $manager->engine('manticore');
 
         try {
             $class = $this->argument('model');

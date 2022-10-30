@@ -2,8 +2,11 @@
 
 namespace RomanStruk\ManticoreScoutEngine;
 
-use Laravel\Scout\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use RomanStruk\ManticoreScoutEngine\Console\IndexCommand;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreMysqlEngine;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreGrammar;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreConnection;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Scout\EngineManager;
 
@@ -17,14 +20,44 @@ class ManticoreServiceProvider extends ServiceProvider
     public function boot()
     {
         resolve(EngineManager::class)->extend('manticore', function () {
-            return new ManticoreEngine(config('manticore'));
+            if (config('manticore.engine') === 'http-client'){
+                return new ManticoreEngine(config('manticore'));
+            }
+
+            return app(ManticoreMysqlEngine::class);
         });
 
-        Builder::macro('whereRaw', function ($sql, $bindings = []) {
-            $this->whereRaws[$sql] = $bindings;
-            return $this;
+        $this->configureMysqlEngine();
+
+        $this->configureCommands();
+    }
+
+    protected function configureMysqlEngine()
+    {
+        $this->app->bind(ManticoreMysqlEngine::class, function ($app) {
+            return new ManticoreMysqlEngine(config('manticore'));
         });
 
+        $this->app->afterResolving(ManticoreMysqlEngine::class, function () {
+            $this->app->bind(ManticoreGrammar::class, ManticoreGrammar::class);
+
+            $this->app->bind(ManticoreConnection::class, function ($app) {
+                return new ManticoreConnection(
+                    $app->make(ManticoreGrammar::class),
+                    config('manticore.mysql-connection')
+                );
+            });
+            Collection::macro('getFacet', function ($group) {
+                return app(EngineManager::class)->driver('manticore')->getFacet($group);
+            });
+            Collection::macro('getFacets', function () {
+                return app(EngineManager::class)->driver('manticore')->getFacets();
+            });
+        });
+    }
+
+    protected function configureCommands()
+    {
         if ($this->app->runningInConsole()) {
             $this->commands([
                 IndexCommand::class,

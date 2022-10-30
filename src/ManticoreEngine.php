@@ -13,14 +13,14 @@ use Manticoresearch\Client;
 class ManticoreEngine extends Engine
 {
     protected Client $manticore;
-    protected array $options = [
-        'max_matches' => 1000,
-    ];
+    protected array $options = [];
+
+    protected array $config;
 
     public function __construct(array $config)
     {
         $this->manticore = new Client($config['connection']);
-        $this->options['max_matches'] = $config['max_matches'];
+        $this->config = $config['paginate_max_matches'];
     }
 
     /**
@@ -66,6 +66,7 @@ class ManticoreEngine extends Engine
 
     public function search(Builder $builder)
     {
+        $this->options = array_merge($this->options, $builder->model->scoutMetadata());
         $this->options['max_matches'] = $this->getMaxMatches($builder->limit);
 
         return $this->performSearch($builder, array_filter([
@@ -87,7 +88,6 @@ class ManticoreEngine extends Engine
      */
     protected function performSearch(Builder $builder, array $searchParams)
     {
-        $this->options = array_merge($this->options, $builder->model->scoutMetadata());
         $option = collect($this->options)->map(fn($v, $k) => $k . '=' . $v)->implode(', ');
 
         $manticoreQuery = DB::table($builder->index ?: $builder->model->searchableAs());
@@ -143,7 +143,8 @@ class ManticoreEngine extends Engine
     {
         $offset = ($page - 1) * $perPage;
 
-        $this->options['max_matches'] = $this->getMaxMatches($offset + $perPage);
+        $this->options = array_merge($this->options, $builder->model->scoutMetadata());
+        $this->options['max_matches'] = $this->config['paginate_max_matches'] ?: ($offset + $perPage);
 
         return $this->performSearch($builder, array_filter([
             'where' => $builder->wheres,
@@ -345,15 +346,15 @@ class ManticoreEngine extends Engine
      *
      * @param ?int $max
      *
-     * @return int|null
+     * @return int
      */
-    protected function getMaxMatches(?int $max): ?int
+    protected function getMaxMatches(?int $max): int
     {
         if (! is_null($this->options['max_matches'])) {
             return $this->options['max_matches'];
         }
 
-        return $max;
+        return $max ?: 1000;
     }
 
     /**
