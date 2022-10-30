@@ -2,7 +2,15 @@
 
 All notable changes to `romanstruk/manticore-scout-engine` will be documented in this file.
 
+## Version 4
+
+### 4.0.0 (30.10.2022)
+
 ## Version 3
+
+- Додана альтернатива для стандартного клієнта у вигляді laravel подібного builder'а з підключення до мантікори через порт mysql
+- Змінено файл конфігурації
+- Доповнено readme
 
 ### 3.0.0 (13.10.2022)
 - Змінений формат міграції

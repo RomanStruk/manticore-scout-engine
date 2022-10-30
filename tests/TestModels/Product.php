@@ -58,7 +58,7 @@ class Product extends Model
     public function scoutMetadata(): array
     {
         return [
-            'cutoff' => '0',
+            'cutoff' => 0,
             'max_matches' => 1000,
         ];
     }

@@ -32,8 +32,8 @@
         <env name="SCOUT_PREFIX" value="test_"/>
         <env name="MANTICORE_HOST" value="localhost"/>
         <env name="MANTICORE_PORT" value="9308"/>
-        <env name="MANTICORE_SQL_HOST" value="127.0.0.1"/>
-        <env name="MANTICORE_SQL_PORT" value="9306"/>
+        <env name="MANTICORE_MYSQL_HOST" value="127.0.0.1"/>
+        <env name="MANTICORE_MYSQL_PORT" value="9306"/>
 <!--        <env name="QUEUE_CONNECTION" value="database"/>-->
         <env name="APP_KEY" value="AckfSECXIvnK5r28GVIWUAxmbBSjTsmF"/>
     </php>

@@ -16,8 +16,8 @@ return [
     ],
 
     'mysql-connection' => [
-        'host' => env('MANTICORE_SQL_HOST', '127.0.0.1'),
-        'port' => env('MANTICORE_SQL_PORT', '9306'),
+        'host' => env('MANTICORE_MYSQL_HOST', '127.0.0.1'),
+        'port' => env('MANTICORE_MYSQL_PORT', '9306'),
     ],
 
     /*
@@ -44,5 +44,5 @@ return [
     |
     */
 
-    'paginate_max_matches' => null,
+    'paginate_max_matches' => 1000,
 ];
