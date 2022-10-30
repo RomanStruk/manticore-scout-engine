@@ -1,5 +1,5 @@
 # Manticore Scout Engine
-[![Release](https://img.shields.io/badge/Release-v4.0.1-green?style=flat-square)](https://github.com/RomanStruk/Kaca/releases)
+[![Release](https://img.shields.io/badge/Release-v4.0.3-green?style=flat-square)](https://github.com/RomanStruk/manticore-scout-engine/releases)
 
 Manticore Engine for Laravel Scout
 
