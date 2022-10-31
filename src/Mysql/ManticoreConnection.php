@@ -135,6 +135,14 @@ class ManticoreConnection
     }
 
     /**
+     * Run a truncate statement against the database.
+     */
+    public function truncate($query, $bindings = [])
+    {
+        return $this->affectingStatement($query, $bindings);
+    }
+
+    /**
      * Run an SQL statement and get the number of rows affected.
      */
     public function affectingStatement($query, $bindings = [])

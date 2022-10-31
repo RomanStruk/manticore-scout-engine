@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.0.5 (31.10.2022)
+- виправлення truncate
+
 ### 4.0.4 (31.10.2022)
 - виправлення з total_found для пагінації
 - виправлення bool для методу when 
