@@ -214,9 +214,7 @@ class ManticoreGrammar extends Grammar
      */
     protected function whereAny(Builder $query, array $where): string
     {
-        $any = collect(range(1, count($where['value'])))->map(fn($item) => "?")->implode(', ');
-
-        return $this->wrap($where['column']) . ' any (' . $any . ')';
+        return $this->wrap($where['column']) . ' any (' . $this->parameterize($where['value']) . ')';
     }
 
     /**
@@ -224,9 +222,35 @@ class ManticoreGrammar extends Grammar
      */
     protected function whereNotAny(Builder $query, array $where): string
     {
-        $any = collect(range(1, count($where['value'])))->map(fn($item) => "?")->implode(', ');
+        return $this->wrap($where['column']) . ' not any (' . $this->parameterize($where['value']) . ')';
+    }
 
-        return $this->wrap($where['column']) . ' not any (' . $any . ')';
+    /**
+     * Compile a "where any mva" clause.
+     */
+    protected function whereAnyMva(Builder $query, array $where): string
+    {
+        $value = $this->parameter($where['value']);
+
+        $operator = str_replace('?', '??', $where['operator']);
+
+        return 'any(' . $this->wrap($where['column']) . ') ' . $operator .' ' . $value;
+    }
+
+    /**
+     * Compile a "where any mva in" clause.
+     */
+    protected function whereAnyMvaIn(Builder $query, array $where): string
+    {
+        return 'any(' . $this->wrap($where['column']) . ') in (' . $this->parameterize($where['value']) . ')';
+    }
+
+    /**
+     * Compile a "where any mva not in" clause.
+     */
+    protected function whereAnyMvaNotIn(Builder $query, array $where): string
+    {
+        return 'any(' . $this->wrap($where['column']) . ') not in (' . $this->parameterize($where['value']) . ')';
     }
 
     /**
@@ -242,15 +266,19 @@ class ManticoreGrammar extends Grammar
     }
 
     /**
-     * Compile a "where all mva" clause.
+     * Compile a "where all mva in" clause.
      */
-    protected function whereAnyMva(Builder $query, array $where): string
+    protected function whereAllMvaIn(Builder $query, array $where): string
     {
-        $value = $this->parameter($where['value']);
+        return 'all(' . $this->wrap($where['column']) . ') in (' . $this->parameterize($where['value']) . ')';
+    }
 
-        $operator = str_replace('?', '??', $where['operator']);
-
-        return 'any(' . $this->wrap($where['column']) . ')' . $operator . $value;
+    /**
+     * Compile a "where all mva not in" clause.
+     */
+    protected function whereAllMvaNotIn(Builder $query, array $where): string
+    {
+        return 'all(' . $this->wrap($where['column']) . ') not in (' . $this->parameterize($where['value']) . ')';
     }
 
     /**
@@ -258,9 +286,7 @@ class ManticoreGrammar extends Grammar
      */
     protected function whereAll(Builder $query, array $where): string
     {
-        $all = collect(range(1, count($where['value'])))->map(fn($item) => "?")->implode(', ');
-
-        return $this->wrap($where['column']) . ' all( ' . $all . ')';
+        return $this->wrap($where['column']) . ' all( ' . $this->parameterize($where['value']) . ')';
     }
 
     /**
@@ -268,9 +294,7 @@ class ManticoreGrammar extends Grammar
      */
     protected function whereNotAll(Builder $query, array $where): string
     {
-        $all = collect(range(1, count($where['value'])))->map(fn($item) => "?")->implode(', ');
-
-        return $this->wrap($where['column']) . ' not all( ' . $all . ')';
+        return $this->wrap($where['column']) . ' not all( ' . $this->parameterize($where['value']) . ')';
     }
 
     /**

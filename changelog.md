@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.1.0 (31.10.2022)
+- Додані оператори `in` `not in` для вибірок `whereAllMva` `whereAnyMva`
+
 ### 4.0.5 (31.10.2022)
 - виправлення truncate
 

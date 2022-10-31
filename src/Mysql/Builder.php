@@ -212,7 +212,13 @@ class Builder
      */
     public function whereAllMva($column, string $operator,  $value, string $boolean = 'and'): Builder
     {
-        $type = 'AllMva';
+        if (strtolower($operator) === 'in'){
+            $type = 'AllMvaIn';
+        }elseif (strtolower($operator) === 'not in'){
+            $type = 'AllMvaNotIn';
+        }else{
+            $type = 'AllMva';
+        }
 
         $this->wheres[] = compact(
             'type', 'column', 'operator', 'value', 'boolean'
@@ -227,7 +233,13 @@ class Builder
      */
     public function whereAnyMva($column, string $operator,  $value, string $boolean = 'and'): Builder
     {
-        $type = 'AnyMva';
+        if (strtolower($operator) === 'in'){
+            $type = 'AnyMvaIn';
+        }elseif (strtolower($operator) === 'not in'){
+            $type = 'AnyMvaNotIn';
+        }else{
+            $type = 'AnyMva';
+        }
 
         $this->wheres[] = compact(
             'type', 'column', 'operator', 'value', 'boolean'
