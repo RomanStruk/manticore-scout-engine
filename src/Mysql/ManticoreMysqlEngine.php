@@ -248,7 +248,7 @@ class ManticoreMysqlEngine extends Engine
      */
     public function getTotalCount($results): int
     {
-        return $results['meta']['total'];
+        return $results['meta']['total_found'];
     }
 
     /**

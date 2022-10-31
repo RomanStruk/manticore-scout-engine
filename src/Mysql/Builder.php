@@ -447,7 +447,7 @@ class Builder
     /**
      * Apply the callback's query changes if the given "value" is true.
      */
-    public function when(bool $value, Closure $callback, ?Closure $default = null): Builder
+    public function when($value, Closure $callback, ?Closure $default = null): Builder
     {
         if ($value) {
             return $callback($this, $value) ?: $this;
