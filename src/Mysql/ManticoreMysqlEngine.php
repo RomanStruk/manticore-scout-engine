@@ -194,7 +194,7 @@ class ManticoreMysqlEngine extends Engine
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if ($results['meta']['total'] === 0) {
+        if ($results['meta']['total'] == 0) {
             return $model->newCollection();
         }
 
