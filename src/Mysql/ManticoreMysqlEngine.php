@@ -176,7 +176,7 @@ class ManticoreMysqlEngine extends Engine
      */
     public function mapIds($results)
     {
-        if ($results['meta']['total'] === 0) {
+        if ($results['meta']['total'] == 0) {
             return collect();
         }
 
@@ -222,7 +222,7 @@ class ManticoreMysqlEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if ($results['meta']['total'] === 0) {
+        if ($results['meta']['total'] == 0) {
             return LazyCollection::make($model->newCollection());
         }
 
