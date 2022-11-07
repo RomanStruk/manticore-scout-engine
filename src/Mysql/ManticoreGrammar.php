@@ -158,6 +158,22 @@ class ManticoreGrammar extends Grammar
     }
 
     /**
+     * Compile the random statement into SQL.
+     */
+    public function compileRandom(): string
+    {
+        return 'rand()';
+    }
+
+    /**
+     * Compile the random statement into SQL.
+     */
+    public function compileWeight(string $direction = 'asc'): string
+    {
+        return 'weight() ' . $direction;
+    }
+
+    /**
      * Wrap a single string in keyword identifiers.
      */
     protected function wrapValue($value): string
@@ -234,7 +250,7 @@ class ManticoreGrammar extends Grammar
 
         $operator = str_replace('?', '??', $where['operator']);
 
-        return 'any(' . $this->wrap($where['column']) . ') ' . $operator .' ' . $value;
+        return 'any(' . $this->wrap($where['column']) . ') ' . $operator . ' ' . $value;
     }
 
     /**
@@ -500,8 +516,8 @@ class ManticoreGrammar extends Grammar
     protected function compileReplaceMvaValues(array $values): string
     {
         return '(' . collect($values)
-            ->map(fn($value) => '?')
-            ->implode(', ') . ')';
+                ->map(fn($value) => '?')
+                ->implode(', ') . ')';
     }
 
     /**
@@ -511,7 +527,7 @@ class ManticoreGrammar extends Grammar
     {
         $table = $this->wrapTable($query->index);
 
-        return "drop table {$table};";
+        return "drop table {$table}";
     }
 
     /**
@@ -523,6 +539,6 @@ class ManticoreGrammar extends Grammar
 
         $withReconfigure = $query->withReconfigure ? ' with reconfigure;' : ';';
 
-        return "TRUNCATE TABLE {$table}{$withReconfigure}";
+        return "truncate table {$table}{$withReconfigure}";
     }
 }

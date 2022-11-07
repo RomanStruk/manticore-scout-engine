@@ -4,6 +4,11 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.2.0 (07.11.2022)
+- Виправлено видалення індекса
+- Додано сортування в рандомному порядку `inRandomOrder()`, по вазі `inWeightOrder()`
+- Додано можливість логування запитів `app(ManticoreConnection::class)->enableQueryLog();` та вивід результатів логування `app(ManticoreConnection::class)->getQueryLog();`
+
 ### 4.1.0 (31.10.2022)
 - Додані оператори `in` `not in` для вибірок `whereAllMva` `whereAnyMva`
 

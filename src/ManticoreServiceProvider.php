@@ -40,7 +40,7 @@ class ManticoreServiceProvider extends ServiceProvider
 
         $this->app->bind(ManticoreGrammar::class, ManticoreGrammar::class);
 
-        $this->app->bind(ManticoreConnection::class, function ($app) {
+        $this->app->singleton(ManticoreConnection::class, function ($app) {
             return new ManticoreConnection(
                 $app->make(ManticoreGrammar::class),
                 config('manticore.mysql-connection')

@@ -4,6 +4,7 @@ namespace RomanStruk\ManticoreScoutEngine\Tests\Unit;
 
 use Illuminate\Support\Facades\Artisan;
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreConnection;
 use RomanStruk\ManticoreScoutEngine\Tests\TestCase;
 use RomanStruk\ManticoreScoutEngine\Tests\TestModels\Product;
 
@@ -14,6 +15,7 @@ class ManticoreTest extends TestCase
         parent::setUp();
 
         Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
+
         Artisan::call('manticore:index', ['model' => Product::class]);
     }
 
@@ -58,5 +60,22 @@ class ManticoreTest extends TestCase
         }
 
         $this->assertCount(9, $searchable);
+    }
+
+    /** @test */
+    public function it_order_by_random()
+    {
+        Product::factory()->create();
+        Product::factory()->create();
+
+        $searchable1 = Product::search('', function (Builder $builder) {
+            return $builder->inRandomOrder(1);
+        })->first();
+
+        $searchable2 = Product::search('', function (Builder $builder) {
+            return $builder->inRandomOrder(2);
+        })->first();
+
+        $this->assertTrue($searchable1->id != $searchable2->id);
     }
 }

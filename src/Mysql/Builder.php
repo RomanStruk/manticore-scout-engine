@@ -284,6 +284,41 @@ class Builder
     }
 
     /**
+     * Put the query's results in random order.
+     */
+    public function inRandomOrder(?int $seed = null)
+    {
+        if (!is_null($seed)){
+            $this->option('rand_seed', $seed);
+        }
+
+        return $this->orderByRaw($this->grammar->compileRandom());
+    }
+
+    /**
+     * Put the query's results in weight order.
+     */
+    public function inWeightOrder(string $direction = 'asc')
+    {
+        return $this->orderByRaw($this->grammar->compileWeight($direction));
+    }
+
+
+    /**
+     * Add a raw "order by" clause to the query.
+     */
+    public function orderByRaw(string $sql, array $bindings = []): Builder
+    {
+        $type = 'Raw';
+
+        $this->orders[] = compact('type', 'sql');
+
+        $this->addBinding($bindings, 'order');
+
+        return $this;
+    }
+
+    /**
      * Add a facet where clause to the query.
      */
     public function facet(string $field, ?string $group = null, ?int $limit = null, ?string $as = null): Builder
@@ -426,7 +461,7 @@ class Builder
      */
     public function drop(): int
     {
-        return $this->connection->delete(
+        return $this->connection->drop(
             $this->grammar->compileDrop($this),
         );
     }

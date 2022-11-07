@@ -15,9 +15,13 @@ class ManticoreConnection
 
     protected ManticoreGrammar $grammar;
 
+    protected bool $loggingQueries = false;
+
+    protected array $queryLog = [];
+
     public function __construct(ManticoreGrammar $grammar, array $config)
     {
-        $this->pdo = new PDO('mysql:host='.$config['host'].';port='.$config['port']);
+        $this->pdo = new PDO('mysql:host=' . $config['host'] . ';port=' . $config['port']);
         $this->grammar = $grammar;
     }
 
@@ -31,7 +35,7 @@ class ManticoreConnection
             $this->bindValues($statement, $this->prepareBindings($bindings));
 
             $execute = $statement->execute();
-            if($execute === false){
+            if ($execute === false) {
                 throw new \Exception(implode('|', $statement->errorInfo()));
             }
             $result = [];
@@ -39,15 +43,15 @@ class ManticoreConnection
                 $result[] = $statement->fetchAll(PDO::FETCH_ASSOC);
             } while ($statement->nextRowset());
 
-            if (count($result) !== $countRowSet){
+            if (count($result) !== $countRowSet) {
                 throw new \Exception('Count row set invalid');
             }
 
             $grammar = $this->getQueryGrammar();
             return [
                 'hits' => $result[0],
-                'facets' => $grammar->formatFacets(array_slice($result, 1, $countRowSet-2)),
-                'meta' => $withMeta ? $grammar->formatMeta($result[$countRowSet-1]): [],
+                'facets' => $grammar->formatFacets(array_slice($result, 1, $countRowSet - 2)),
+                'meta' => $withMeta ? $grammar->formatMeta($result[$countRowSet - 1]) : [],
             ];
         });
     }
@@ -65,14 +69,29 @@ class ManticoreConnection
 
     protected function runQueryCallback($query, $bindings, Closure $callback)
     {
+        $start = microtime(true);
+
         try {
-            return $callback($query, $bindings);
-        }
-        catch (\Exception $e) {
+            $result = $callback($query, $bindings);
+        } catch (\Exception $e) {
             throw new QueryException(
                 $query, $this->prepareBindings($bindings), $e
             );
         }
+
+        $this->logQuery(
+            $query, $bindings, $this->getElapsedTime($start)
+        );
+
+        return $result;
+    }
+
+    /**
+     * Get the elapsed time since a given starting point.
+     */
+    protected function getElapsedTime(int $start): float
+    {
+        return round((microtime(true) - $start) * 1000, 2);
     }
 
     public function getPdo(): PDO
@@ -95,7 +114,7 @@ class ManticoreConnection
             if ($value instanceof DateTimeInterface) {
                 $bindings[$key] = $value->format($grammar->getDateFormat());
             } elseif (is_bool($value)) {
-                $bindings[$key] = (int) $value;
+                $bindings[$key] = (int)$value;
             } elseif (is_string($value)) {
                 $bindings[$key] = $grammar->escape($value);
             }
@@ -106,11 +125,11 @@ class ManticoreConnection
 
     public function createIndex($sql)
     {
-        return $this->runQueryCallback($sql, [], function ($query){
+        return $this->runQueryCallback($sql, [], function ($query) {
 
             $execute = $this->getPdo()->exec($query);
 
-            if($execute === false){
+            if ($execute === false) {
                 throw new \Exception(implode('|', $this->getPdo()->errorInfo()));
             }
 
@@ -121,7 +140,7 @@ class ManticoreConnection
     /**
      * Run an replace statement against the database.
      */
-    public function replace(string $query, $bindings = [])
+    public function replace(string $query, $bindings = []): int
     {
         return $this->affectingStatement($query, $bindings);
     }
@@ -129,23 +148,31 @@ class ManticoreConnection
     /**
      * Run a delete statement against the database.
      */
-    public function delete($query, $bindings = [])
+    public function delete($query, $bindings = []): int
     {
         return $this->affectingStatement($query, $bindings);
+    }
+
+    /**
+     * Run a drop statement against the database.
+     */
+    public function drop($query, $bindings = []): bool
+    {
+        return $this->statement($query, $bindings);
     }
 
     /**
      * Run a truncate statement against the database.
      */
-    public function truncate($query, $bindings = [])
+    public function truncate($query, $bindings = []): bool
     {
-        return $this->affectingStatement($query, $bindings);
+        return $this->statement($query, $bindings);
     }
 
     /**
      * Run an SQL statement and get the number of rows affected.
      */
-    public function affectingStatement($query, $bindings = [])
+    public function affectingStatement($query, $bindings = []): int
     {
         return $this->runQueryCallback($query, $bindings, function ($query, $bindings) {
 
@@ -159,6 +186,51 @@ class ManticoreConnection
         });
     }
 
+    /**
+     * Execute an SQL statement and return the boolean result.
+     */
+    public function statement(string $query, array $bindings = []): bool
+    {
+        return $this->runQueryCallback($query, $bindings, function ($query, $bindings) {
+            $statement = $this->getPdo()->prepare($query);
+
+            $this->bindValues($statement, $this->prepareBindings($bindings));
+
+            return $statement->execute();
+        });
+    }
+
+    /**
+     * Log a query in the connection's query log.
+     */
+    public function logQuery(string $query, array $bindings, $time = null)
+    {
+        if ($this->loggingQueries) {
+            $this->queryLog[] = compact('query', 'bindings', 'time');
+        }
+    }
+
+    /**
+     * Enable the query log on the connection.
+     *
+     * @return void
+     */
+    public function enableQueryLog()
+    {
+        $this->loggingQueries = true;
+    }
+
+    /**
+     * Get the connection query log.
+     */
+    public function getQueryLog(): array
+    {
+        return $this->queryLog;
+    }
+
+    /**
+     * Get the query grammar used by the connection.
+     */
     protected function getQueryGrammar(): ManticoreGrammar
     {
         return $this->grammar;
