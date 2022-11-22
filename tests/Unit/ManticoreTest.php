@@ -78,4 +78,21 @@ class ManticoreTest extends TestCase
 
         $this->assertTrue($searchable1->id != $searchable2->id);
     }
+
+    /** @test */
+    public function it_group_by_field()
+    {
+        Product::factory()->create(['category_id' => 1]);
+        Product::factory()->create(['category_id' => 1]);
+        Product::factory()->create(['category_id' => 2]);
+
+        $searchable1 = Product::search('', function (Builder $builder) {
+            return $builder->groupBy('category_id')->facet('category_id');
+        })->get();
+
+        $searchable2 = Product::search('')->get();
+
+        $this->assertTrue($searchable1->count() != $searchable2->count());
+        $this->assertTrue($searchable1->count() == 2);
+    }
 }

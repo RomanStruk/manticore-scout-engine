@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.3.0 (22.11.2022)
+- Додано групування по полю `groupBy('field_name')`
+
 ### 4.2.0 (07.11.2022)
 - Виправлено видалення індекса
 - Додано сортування в рандомному порядку `inRandomOrder()`, по вазі `inWeightOrder()`

@@ -17,6 +17,7 @@ class ManticoreGrammar extends Grammar
         'wheres',
         'orders',
         'limit',
+        'groups',
         'offset',
         'options',
         'facets',
@@ -327,6 +328,18 @@ class ManticoreGrammar extends Grammar
     protected function compileOffset(Builder $query, int $offset): string
     {
         return 'offset ' . $offset;
+    }
+
+    /**
+     * Compile the "group by" portions of the query.
+     */
+    protected function compileGroups(Builder $query, array $groups): string
+    {
+        if (empty($groups)){
+            return '';
+        }
+
+        return 'group by '.$this->columnize($groups);
     }
 
     /**

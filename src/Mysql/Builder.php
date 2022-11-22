@@ -33,6 +33,11 @@ class Builder
      */
     public array $orders = [];
 
+    /**
+     * The groupings for the query.
+     */
+    public array $groups = [];
+
     public array $options = [
         'max_matches' => 1000,
     ];
@@ -52,6 +57,7 @@ class Builder
         'select' => [],
         'search' => [],
         'where' => [],
+        'groupBy' => [],
         'options' => [],
         'order' => [],
     ];
@@ -303,7 +309,6 @@ class Builder
         return $this->orderByRaw($this->grammar->compileWeight($direction));
     }
 
-
     /**
      * Add a raw "order by" clause to the query.
      */
@@ -314,6 +319,23 @@ class Builder
         $this->orders[] = compact('type', 'sql');
 
         $this->addBinding($bindings, 'order');
+
+        return $this;
+    }
+
+    /**
+     * Add a "group by" clause to the query.
+     *
+     * @param  array|string  ...$groups
+     */
+    public function groupBy(...$groups): Builder
+    {
+        foreach ($groups as $group) {
+            $this->groups = array_merge(
+                $this->groups,
+                Arr::wrap($group)
+            );
+        }
 
         return $this;
     }
@@ -442,7 +464,6 @@ class Builder
      * Delete records from the database.
      *
      * @param  mixed  $id
-     * @return int
      */
     public function delete($id = null): int
     {
