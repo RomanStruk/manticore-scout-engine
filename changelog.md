@@ -23,7 +23,6 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 - виправлення bool для методу when 
 
 ### 4.0.0 (30.10.2022)
-
 - Додана альтернатива для стандартного клієнта у вигляді laravel подібного builder'а з підключення до мантікори через порт mysql
 - Змінено файл конфігурації
 - Доповнено readme

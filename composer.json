@@ -10,18 +10,18 @@
         }
     ],
     "require": {
-        "php": "^7.4",
-        "illuminate/support": "~7|~8",
-        "manticoresoftware/manticoresearch-php": "^2.1",
-        "laravel/scout": "^9.4",
+        "php": "^7.4|^8.1",
+        "illuminate/support": "~9",
+        "manticoresoftware/manticoresearch-php": "^2.2",
+        "laravel/scout": "^9.5",
         "ext-pdo": "*",
         "ext-json": "*"
     },
     "require-dev": {
-        "orchestra/testbench": "6.x",
-        "phpunit/phpunit": "^9.3",
-        "nunomaduro/collision": "v5.x-dev",
-        "nunomaduro/phpinsights": "dev-master"
+        "orchestra/testbench": "7",
+        "phpunit/phpunit": "^9.5",
+        "nunomaduro/phpinsights": "dev-master",
+        "nunomaduro/collision": "v6.x-dev"
     },
     "autoload": {
         "psr-4": {
