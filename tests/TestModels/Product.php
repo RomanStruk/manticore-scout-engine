@@ -28,6 +28,7 @@ class Product extends Model
                 'price' => ['type' => 'integer'],
                 'category_id' => ['type' => 'integer'],
                 'created_at' => ['type' => 'timestamp'],
+                'property' => ['type' => 'string'],
             ],
             'settings' => [
                 'min_prefix_len' => '3',
@@ -47,6 +48,7 @@ class Product extends Model
             'description' => $this->description,
             'brand_name' => $this->brand_name,
             'category_id' => $this->category_id,
+            'property' => $this->property,
             'price' => $this->price,
             'created_at' => $this->created_at->unix(),
         ];

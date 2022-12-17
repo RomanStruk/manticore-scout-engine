@@ -4,6 +4,11 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.4.0 (17.12.2022)
+- Додано facet distinct `distinctFacet('brand_name', 'property')` `FACET brand_name distinct property;`
+- Додано facet по виразу `facetExpressions('INTERVAL(price,200,400,600,800)', 'price_range')` `FACET INTERVAL(price,200,400,600,800) AS price_range;`
+- Додано select для виразів та конкретних полів `select(['*'])` `selectRaw('INTERVAL(price,200,400) as price_range')`
+
 ### 4.3.0 (22.11.2022)
 - Додано групування по полю `groupBy('field_name')`
 
@@ -28,47 +33,3 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 - Змінено файл конфігурації
 - Доповнено readme
 - реалізовано whereAnyMva
-
-## Version 3
-
-### 3.0.0 (13.10.2022)
-- Змінений формат міграції
-```php
-    public function scoutIndexMigration(): array
-    {
-        return [
-            'fields' => [
-                'name' => ['type' => 'text'],
-            ],
-            'settings' => [
-                'min_prefix_len' => '3',
-                'min_infix_len' => '3',
-                'prefix_fields' => 'name',
-                'expand_keywords' => '1',
-            ],
-            'silent' => false,
-        ];
-    }
-```
-
-## Version 2
-
-### 2.0.1 (28.08.2022)
-- Виправлення помилки з whereRaws
-- Доповнена документація
-
-### 2.0.0 (27.08.2022)
-- Sql синтаксис
-
-## Version 1
-
-### 1.1.0 (24.08.2022)
-- Додано налаштування max_matches
-- Виправлено raw(), дані віддаються масивом
-
-### 1.0.1 (22.08.2022)
-- Додано публікацію файла налаштування
-- readme.md
-
-### 1.0.0 (22.08.2022)
-- Реліз базового функціоналу
