@@ -335,11 +335,11 @@ class ManticoreGrammar extends Grammar
      */
     protected function compileGroups(Builder $query, array $groups): string
     {
-        if (empty($groups)){
+        if (empty($groups)) {
             return '';
         }
 
-        return 'group by '.$this->columnize($groups);
+        return 'group by ' . $this->columnize($groups);
     }
 
     /**
@@ -347,16 +347,70 @@ class ManticoreGrammar extends Grammar
      */
     public function compileFacets(Builder $query, array $facets): string
     {
-        $sql = '';
-        foreach ($facets as $options) {
-            $as = isset($options['as']) ? ' as ' . $options['as'] : null;
-            $groupBy = isset($options['group']) ? ' by ' . $options['group'] : null;
-            $limit = isset($options['limit']) ? ' limit ' . $options['limit'] : null;
-
-            $sql .= ' facet ' . $this->wrap($options['field']) . $as . $groupBy . $limit;
+        if (empty($facets)) {
+            return ';';
         }
 
-        return ltrim($sql . ';');
+        $sql = collect($facets)->map(function ($facet) use ($query) {
+            return $this->{"facet{$facet['type']}"}($query, $facet);
+        })->all();
+
+        return implode(' ', $sql) . ';';
+    }
+
+    /**
+     * Compile a "basic facet" clause.
+     *
+     * FACET {expr_list} [BY {expr_list} ] [DISTINCT {field_name}] [ORDER BY {expr | FACET()} {ASC | DESC}] [LIMIT [offset,] count]
+     */
+    protected function facetBasic(Builder $query, array $facet): string
+    {
+        $sql[] = 'facet ' . $this->wrap($facet['field']);
+        $sql[] = 'by ' . $this->wrap($facet['by']);
+        if ($facet['sortBy']) {
+            $sql[] = "order by {$facet['sortBy']} {$facet['direction']}";
+        }
+        if ($facet['limit']) {
+            $sql[] = "limit {$facet['limit']}";
+        }
+
+        return implode(' ', $sql);
+    }
+
+    /**
+     * Compile a "facet distinct" clause.
+     */
+    protected function facetDistinct(Builder $query, array $facet): string
+    {
+        $sql[] = 'facet ' . $this->wrap($facet['field']);
+        $sql[] = 'by ' . $this->wrap($facet['by']);
+        $sql[] = 'distinct ' . $this->wrap($facet['distinct']);
+
+        if ($facet['sortBy']) {
+            $sql[] = "order by {$facet['sortBy']} {$facet['direction']}";
+        }
+        if ($facet['limit']) {
+            $sql[] = "limit {$facet['limit']}";
+        }
+
+        return implode(' ', $sql);
+    }
+
+    /**
+     * Compile a "facet over expressions", "facet over multi-level grouping" clause.
+     */
+    protected function facetExpressions(Builder $query, array $facet): string
+    {
+        $sql[] = "facet {$facet['expressions']}";
+        $sql[] = "as {$facet['as']}";
+        if ($facet['sortBy']) {
+            $sql[] = "order by {$facet['sortBy']} {$facet['direction']}";
+        }
+        if ($facet['limit']) {
+            $sql[] = "limit {$facet['limit']}";
+        }
+
+        return implode(' ', $sql);
     }
 
     /**
@@ -398,12 +452,34 @@ class ManticoreGrammar extends Grammar
         return collect($facets)->mapWithKeys(
             fn($values, $key) => [
                 empty($values) ? $key : array_key_first($values[0]) => collect($values)
-                    ->map(fn($facet) => [
-                        'key' => $facet[array_key_first($facet)],
-                        'count' => $facet[array_key_last($facet)],
-                    ])->all()
+                    ->map(function ($facet) {
+                        $result[array_key_first($facet)] = $val = array_shift($facet);
+                        $result['key'] = $val; // support previous version
+
+                        if ($keyFirst = array_key_first($facet)) {
+                            $result[$this->getFacetHumanKeyCount($keyFirst)] = array_shift($facet);
+                        }
+                        if ($keyFirst = array_key_first($facet)) {
+                            $result[$this->getFacetHumanKeyCount($keyFirst)] = array_shift($facet);
+                        }
+
+                        return $result;
+                    })->all()
             ]
         )->all();
+    }
+
+    /**
+     * Return facet count field
+     * count|distinct|field_name
+     */
+    protected function getFacetHumanKeyCount($facetKey): string
+    {
+        if ($facetKey === 'count(*)') {
+            return 'count';
+        }
+
+        return preg_replace('/count\((distinct)\s\w+\)/', '$1', $facetKey);
     }
 
     /**
