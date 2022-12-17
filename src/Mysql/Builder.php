@@ -4,6 +4,7 @@ namespace RomanStruk\ManticoreScoutEngine\Mysql;
 
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
 
@@ -81,13 +82,42 @@ class Builder
     }
 
     /**
+     * Set the columns to be selected.
+     */
+    public function select(array $columns = ['*']): Builder
+    {
+        $this->columns = [];
+        $this->bindings['select'] = [];
+
+        foreach ($columns as $column) {
+            $this->columns[] = $column;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a new “raw” select expression to the query.
+     */
+    public function selectRaw(string $raw, array $bindings = []): Builder
+    {
+        $this->columns[] = new Expression($raw);
+
+        if ($bindings) {
+            $this->addBinding($bindings, 'select');
+        }
+
+        return $this;
+    }
+
+    /**
      * Set the search which the query is targeting.
      */
     public function search($search = ''): Builder
     {
         $this->search = $search;
 
-        if (!empty($this->search)){
+        if (!empty($this->search)) {
             $this->addBinding($search, 'search');
         }
 
@@ -116,7 +146,7 @@ class Builder
         if ($column instanceof Closure && is_null($operator)) {
             return $this->whereNested($column, $boolean);
         }
-        if (is_null($operator)){
+        if (is_null($operator)) {
             $value = $operator;
             $operator = '=';
         }
@@ -216,13 +246,13 @@ class Builder
     /**
      * Add a "where all" clause to the query.
      */
-    public function whereAllMva($column, string $operator,  $value, string $boolean = 'and'): Builder
+    public function whereAllMva($column, string $operator, $value, string $boolean = 'and'): Builder
     {
-        if (strtolower($operator) === 'in'){
+        if (strtolower($operator) === 'in') {
             $type = 'AllMvaIn';
-        }elseif (strtolower($operator) === 'not in'){
+        } elseif (strtolower($operator) === 'not in') {
             $type = 'AllMvaNotIn';
-        }else{
+        } else {
             $type = 'AllMva';
         }
 
@@ -237,13 +267,13 @@ class Builder
     /**
      * Add a "where any mva" clause to the query.
      */
-    public function whereAnyMva($column, string $operator,  $value, string $boolean = 'and'): Builder
+    public function whereAnyMva($column, string $operator, $value, string $boolean = 'and'): Builder
     {
-        if (strtolower($operator) === 'in'){
+        if (strtolower($operator) === 'in') {
             $type = 'AnyMvaIn';
-        }elseif (strtolower($operator) === 'not in'){
+        } elseif (strtolower($operator) === 'not in') {
             $type = 'AnyMvaNotIn';
-        }else{
+        } else {
             $type = 'AnyMva';
         }
 
@@ -294,7 +324,7 @@ class Builder
      */
     public function inRandomOrder(?int $seed = null)
     {
-        if (!is_null($seed)){
+        if (!is_null($seed)) {
             $this->option('rand_seed', $seed);
         }
 
@@ -326,7 +356,7 @@ class Builder
     /**
      * Add a "group by" clause to the query.
      *
-     * @param  array|string  ...$groups
+     * @param array|string ...$groups
      */
     public function groupBy(...$groups): Builder
     {
@@ -342,10 +372,46 @@ class Builder
 
     /**
      * Add a facet where clause to the query.
+     *
+     * @param string $field
+     * @param string|null $by - Faceting by aggregation over another attribute
+     * @param int|null $limit
+     * @param string|null $sortBy
+     * @param string|null $direction
+     *
+     * @return Builder
      */
-    public function facet(string $field, ?string $group = null, ?int $limit = null, ?string $as = null): Builder
+    public function facet(string $field, ?string $by = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
     {
-        $this->facets[] = compact('field', 'group', 'limit', 'as');
+        $type = 'Basic';
+        $by = !is_null($by) ?: $field;
+
+        $this->facets[] = compact('type', 'field', 'by', 'limit', 'sortBy', 'direction');
+
+        return $this;
+    }
+
+    /**
+     * Add a distinct facet where clause to the query.
+     */
+    public function distinctFacet(string $field, string $distinct, ?string $by = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
+    {
+        $type = 'Distinct';
+        $by = !is_null($by) ?: $field;
+
+        $this->facets[] = compact('type', 'field', 'distinct', 'by', 'limit', 'sortBy', 'direction');
+
+        return $this;
+    }
+
+    /**
+     * Add a distinct facet where clause to the query.
+     */
+    public function expressionsFacet(string $expressions, ?string $as = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
+    {
+        $type = 'Expressions';
+
+        $this->facets[] = compact('type', 'expressions', 'as', 'limit', 'sortBy', 'direction');
 
         return $this;
     }
@@ -383,7 +449,7 @@ class Builder
      */
     public function addBinding($value, string $type = 'where'): Builder
     {
-        if (! array_key_exists($type, $this->bindings)) {
+        if (!array_key_exists($type, $this->bindings)) {
             throw new InvalidArgumentException("Invalid binding type: {$type}.");
         }
 
@@ -463,11 +529,11 @@ class Builder
     /**
      * Delete records from the database.
      *
-     * @param  mixed  $id
+     * @param mixed $id
      */
     public function delete($id = null): int
     {
-        if (! is_null($id)) {
+        if (!is_null($id)) {
             $this->where('id', $id);
         }
 
@@ -492,7 +558,7 @@ class Builder
      */
     public function truncate(?bool $withReconfigure)
     {
-        if (is_null($withReconfigure)){
+        if (is_null($withReconfigure)) {
             $this->withReconfigure($withReconfigure);
         }
 

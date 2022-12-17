@@ -13,6 +13,7 @@ class CreateProductsTable extends Migration
 
             $table->string('name');
             $table->string('brand_name');
+            $table->string('property');
             $table->text('description');
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('price');
