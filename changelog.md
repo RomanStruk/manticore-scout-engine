@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.1.1 (08.03.2023)
+- Bind Value for float value `PDO::PARAM_STR`
+
 ### 5.1.0 (17.12.2022)
 - Додано facet distinct `distinctFacet('brand_name', 'property')` `FACET brand_name distinct property;`
 - Додано facet по виразу `facetExpressions('INTERVAL(price,200,400,600,800)', 'price_range')` `FACET INTERVAL(price,200,400,600,800) AS price_range;`
