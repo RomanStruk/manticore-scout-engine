@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.5.2 (22.03.2023)
+- [bug] bind double to PARAM_INT is returned
+
 ### 4.5.1 (22.03.2023)
 - readme update
 
