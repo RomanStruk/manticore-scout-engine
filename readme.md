@@ -104,6 +104,20 @@ $products = Product::search('Brand Name', function (Builder $builder) {
 })->get();
 ```
 
+Quorum matching operator introduces a kind of fuzzy matching. It will only match those documents that pass a given threshold of given words. The example above ("the world is a wonderful place"/3) will match all documents that have at least 3 of the 6 specified words.
+```php
+$products = Product::search('the world is a wonderful place', function (Builder $builder) {
+    return $builder->setQuorumMatchingOperator(3);
+})->get();
+```
+
+Proximity distance is specified in words, adjusted for word count, and applies to all words within quotes. For instance, "cat dog mouse"~5 query means that there must be less than 8-word span which contains all 3 words, ie.
+```php
+$products = Product::search('the world is a wonderful place', function (Builder $builder) {
+    return $builder->setQuorumMatchingOperator(3);
+})->get();
+```
+
 ## Change log
 
 Please see the [changelog](changelog.md) for more information on what has changed recently.
