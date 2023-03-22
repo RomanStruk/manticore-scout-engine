@@ -160,4 +160,48 @@ class ManticoreTest extends TestCase
         $this->assertSame('1', $facets->firstWhere('brand_name', 'Brand Ten')['count']);
         $this->assertSame('2', $facets->firstWhere('brand_name', 'Brand One')['count']);
     }
+
+    /** @test */
+    public function it_will_only_match_those_documents_that_pass_a_given_threshold_of_given_words()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies']);
+        Product::factory()->create(['name' => 'Charging strip apple iphone x microphone a1901']);
+        Product::factory()->create(['name' => 'Apple Iphone X 10 2716MAH battery']);
+        Product::factory()->create(['name' => 'Outlet Product: Apple iPhone 9 256GB Gray']);
+        Product::factory()->create(['name' => 'HP NVIDIA RTX A2000 6GB 4mDP GFX 340L0AA']);
+        Product::factory()->create(['name' => 'HP NVIDIA Quadro RTX 5000 16GB (5JH81AA)']);
+
+        $searchable = Product::search('apple nvidia', function (Builder $builder) {
+            return $builder->setQuorumMatchingOperator(2);
+        })->get();
+
+        $this->assertSame(0, $searchable->count());
+
+        $searchable = Product::search('apple nvidia x', function (Builder $builder) {
+            return $builder->setQuorumMatchingOperator(2);
+        })->get();
+
+        $this->assertSame(3, $searchable->count());
+    }
+
+    /** @test */
+    public function it_will_match_proximity_search_operator()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
+        Product::factory()->create(['name' => 'Charging strip apple iphone x microphone a1901', 'description' => '']);
+        Product::factory()->create(['name' => 'Apple Iphone X 10 2716MAH battery', 'description' => '']);
+        Product::factory()->create(['name' => 'Outlet Product: Apple iPhone 9 256GB Gray', 'description' => '']);
+
+        $searchable = Product::search('Apple Iphone', function (Builder $builder) {
+            return $builder->setProximitySearchOperator(4);
+        })->get();
+
+        $this->assertSame(4, $searchable->count());
+
+        $searchable = Product::search('Smartphone 64GB 256GB', function (Builder $builder) {
+            return $builder->setQuorumMatchingOperator(2);
+        })->get();
+
+        $this->assertSame(1, $searchable->count());
+    }
 }

@@ -10,6 +10,13 @@ use RomanStruk\ManticoreScoutEngine\Tests\TestModels\Product;
 
 class IndexTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
+    }
+
     /** @test */
     public function it_create_manticore_index()
     {
@@ -55,10 +62,9 @@ class IndexTest extends TestCase
         $this->assertSame($found->id, $product->id);
 
         app(EngineManager::class)->driver()->delete(collect([$product]));
+        $foundDeleted = Product::search('some name')->get()->first();
 
-        $found = Product::search('some name')->get()->first();
-
-        $this->assertNull($found);
+        $this->assertNull($foundDeleted);
 
         Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
     }

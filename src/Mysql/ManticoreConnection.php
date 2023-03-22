@@ -115,8 +115,6 @@ class ManticoreConnection
                 $bindings[$key] = $value->format($grammar->getDateFormat());
             } elseif (is_bool($value)) {
                 $bindings[$key] = (int)$value;
-            } elseif (is_string($value)) {
-                $bindings[$key] = $grammar->escape($value);
             }
         }
 
