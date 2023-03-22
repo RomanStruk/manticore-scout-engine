@@ -11,7 +11,7 @@
     ],
     "require": {
         "php": "^7.4|^8.1",
-        "illuminate/support": "~9",
+        "illuminate/support": "~9|~10",
         "manticoresoftware/manticoresearch-php": "^2.2",
         "laravel/scout": "^9.5",
         "ext-pdo": "*",
