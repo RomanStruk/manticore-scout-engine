@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.5.1 (22.03.2023)
+- readme update
+
 ### 4.5.0 (21.03.2023)
 - Quorum matching operator
 - Proximity search operator
