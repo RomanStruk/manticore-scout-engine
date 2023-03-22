@@ -57,12 +57,11 @@ class ManticoreMysqlEngine extends Engine
      */
     public function delete($models)
     {
-        $model = $models->first();
-
-        app(\RomanStruk\ManticoreScoutEngine\Mysql\Builder::class)
-            ->index($model->searchableAs())
-            ->whereIn('id', $models->map->getScoutKey()->all())
-            ->delete();
+        $models->each(function ($model) {
+            app(\RomanStruk\ManticoreScoutEngine\Mysql\Builder::class)
+                ->index($model->searchableAs())
+                ->delete($model->getScoutKey());
+        });
     }
 
     /**

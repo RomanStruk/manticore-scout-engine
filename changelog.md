@@ -4,6 +4,12 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.2.0 (22.03.2023)
+- Quorum matching operator
+- Proximity search operator
+- Fix delete index
+- Added `orWhrere`, `whereNotIn`, `whereNotAny`, `whereNotAll`
+
 ### 5.1.1 (08.03.2023)
 - Bind Value for float value `PDO::PARAM_STR`
 

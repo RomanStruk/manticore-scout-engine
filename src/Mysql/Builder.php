@@ -16,6 +16,11 @@ class Builder
 
     public string $search = '';
 
+    public array $fullTextOperators = [
+        'quorum_matching_operator' => false,
+        'proximity_search_operator' => false,
+    ];
+
     public array $wheres = [];
 
     public array $facets = [];
@@ -52,6 +57,7 @@ class Builder
     public bool $withReconfigure = false;
 
     protected ManticoreGrammar $grammar;
+
     protected ManticoreConnection $connection;
 
     public array $bindings = [
@@ -125,6 +131,60 @@ class Builder
     }
 
     /**
+     * Proximity distance is specified in words, adjusted for word count,
+     * and applies to all words within quotes
+     *
+     * @param float|int $operator
+     */
+    public function setQuorumMatchingOperator($operator): Builder
+    {
+        if (empty($this->search)) {
+            return $this;
+        }
+
+        if (!is_float($operator) && !is_int($operator)){
+            throw new InvalidArgumentException('Quorum matching operator must be a float or integer.');
+        }
+
+        if ($this->fullTextOperators['proximity_search_operator'] === true){
+            throw new InvalidArgumentException('Quorum matching operator and proximity search operator cannot be used together.');
+        }
+
+        $this->fullTextOperators['quorum_matching_operator'] = true;
+
+        $this->bindings['search'] = [];
+        $escapedSearch = $this->grammar->escape($this->search);
+
+        $this->addBinding('"'.$escapedSearch.'"/' . $operator, 'search', false);
+
+        return $this;
+    }
+
+    /**
+     * Quorum matching operator introduces a kind of fuzzy matching.
+     * It will only match those documents that pass a given threshold of given words.
+     */
+    public function setProximitySearchOperator(int $operator): Builder
+    {
+        if (empty($this->search)) {
+            return $this;
+        }
+
+        if ($this->fullTextOperators['quorum_matching_operator'] === true){
+            throw new InvalidArgumentException('Quorum matching operator and proximity search operator cannot be used together.');
+        }
+
+        $this->fullTextOperators['proximity_search_operator'] = true;
+
+        $this->bindings['search'] = [];
+        $escapedSearch = $this->grammar->escape($this->search);
+
+        $this->addBinding('"'.$escapedSearch.'"~' . $operator, 'search', false);
+
+        return $this;
+    }
+
+    /**
      * Add a raw where clause to the query.
      */
     public function whereRaw($sql, array $bindings = [], string $boolean = 'and'): Builder
@@ -146,7 +206,8 @@ class Builder
         if ($column instanceof Closure && is_null($operator)) {
             return $this->whereNested($column, $boolean);
         }
-        if (is_null($operator)) {
+
+        if (func_num_args() === 2) {
             $value = $operator;
             $operator = '=';
         }
@@ -157,6 +218,14 @@ class Builder
         $this->addBinding($this->flattenValue($value), 'where');
 
         return $this;
+    }
+
+    /**
+     * Add an "or where" clause to the query.
+     */
+    public function orWhere($column, $operator = null, $value = null): Builder
+    {
+        return $this->where($column, $operator, $value, 'or');
     }
 
     /**
@@ -212,6 +281,14 @@ class Builder
     }
 
     /**
+     * Add a "where not in" clause to the query.
+     */
+    public function whereNotIn(string $column, $values, string $boolean = 'and'): Builder
+    {
+        return $this->whereIn($column, $values, $boolean, true);
+    }
+
+    /**
      * Add a "where any" clause to the query.
      */
     public function whereAny($column, $value, string $boolean = 'and', bool $not = false): Builder
@@ -228,6 +305,14 @@ class Builder
     }
 
     /**
+     * Add a "where not any" clause to the query.
+     */
+    public function whereNotAny($column, $value, string $boolean = 'and'): Builder
+    {
+        return $this->whereAny($column, $value, $boolean, true);
+    }
+
+    /**
      * Add a "where all" clause to the query.
      */
     public function whereAll($column, $value, string $boolean = 'and', bool $not = false): Builder
@@ -241,6 +326,14 @@ class Builder
         $this->addBinding($this->stringValue($value), 'where');
 
         return $this;
+    }
+
+    /**
+     * Add a "where not all" clause to the query.
+     */
+    public function whereNotAll($column, $value, string $boolean = 'and'): Builder
+    {
+        return $this->whereAll($column, $value, $boolean, true);
     }
 
     /**
@@ -447,16 +540,17 @@ class Builder
     /**
      * Add a binding to the query.
      */
-    public function addBinding($value, string $type = 'where'): Builder
+    public function addBinding($value, string $type = 'where', bool $escape = true): Builder
     {
         if (!array_key_exists($type, $this->bindings)) {
             throw new InvalidArgumentException("Invalid binding type: {$type}.");
         }
 
         if (is_array($value)) {
+            $value = array_map(fn($v) => $escape && is_string($v) ? $this->grammar->escape($v) : $v, $value);
             $this->bindings[$type] = array_values(array_merge($this->bindings[$type], $value));
         } else {
-            $this->bindings[$type][] = $value;
+            $this->bindings[$type][] = $escape && is_string($value) ? $this->grammar->escape($value) : $value;
         }
 
         return $this;
