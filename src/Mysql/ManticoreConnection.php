@@ -5,24 +5,30 @@ namespace RomanStruk\ManticoreScoutEngine\Mysql;
 use Closure;
 use DateTimeInterface;
 use Illuminate\Database\QueryException;
+use LogicException;
 use PDO;
 
 class ManticoreConnection
 {
-    protected PDO $pdo;
-
-    protected int $fetchMode = PDO::FETCH_ASSOC;
-
+    protected ?PDO $pdo;
     protected ManticoreGrammar $grammar;
-
+    protected int $fetchMode = PDO::FETCH_ASSOC;
     protected bool $loggingQueries = false;
-
     protected array $queryLog = [];
+    protected \Closure $reconnector;
 
     public function __construct(ManticoreGrammar $grammar, array $config)
     {
-        $this->pdo = new PDO('mysql:host=' . $config['host'] . ';port=' . $config['port']);
+        $this->pdo = $this->setPDO($config);
         $this->grammar = $grammar;
+        $this->reconnector = function ($connection) use ($config) {
+            $this->pdo = $this->setPDO($config);
+        };
+    }
+
+    protected function setPDO(array $config): ?PDO
+    {
+        return new PDO('mysql:host=' . $config['host'] . ';port=' . $config['port'], '', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     }
 
     public function select($sql, $bindings, int $countRowSet, bool $withMeta)
@@ -67,12 +73,21 @@ class ManticoreConnection
         }
     }
 
-    protected function runQueryCallback($query, $bindings, Closure $callback)
+    protected function runQueryCallback($query, $bindings, Closure $callback, $recursion = false)
     {
+        $this->reconnectIfMissingConnection();
+
         $start = microtime(true);
 
         try {
             $result = $callback($query, $bindings);
+        } catch (\PDOException $e) {
+            if (! $recursion && static::hasGoneAway($e)) {
+                $this->reconnect();
+                return $this->runQueryCallback($query, $bindings, $callback, true);
+            }
+
+            throw $e;
         } catch (\Exception $e) {
             throw new QueryException(
                 $query, $this->prepareBindings($bindings), $e
@@ -84,6 +99,47 @@ class ManticoreConnection
         );
 
         return $result;
+    }
+
+    /**
+     * Check if a PDOException is a server disconnection or not
+     *
+     * @param \PDOException $e
+     * @return bool Returns TRUE if the PDOException is for "server has gone away" or FALSE for another error
+     */
+    public static function hasGoneAway(\PDOException $e): bool
+    {
+        return $e->getCode() == 'HY000' && stristr($e->getMessage(), 'server has gone away');
+    }
+
+    /**
+     * Reconnect to the database if a PDO connection is missing.
+     */
+    public function reconnectIfMissingConnection(): void
+    {
+        if ($this->getPdo()->getAttribute(PDO::ATTR_SERVER_INFO) == 'MySQL server has gone away') {
+            $this->reconnect();
+        }
+    }
+
+    /**
+     * Reconnect to the database.
+     *
+     * @return void
+     *
+     * @throws \LogicException
+     */
+    public function reconnect(): void
+    {
+        if (is_callable($this->reconnector)) {
+            $this->pdo = null;
+
+            call_user_func($this->reconnector, $this);
+
+            return;
+        }
+
+        throw new LogicException('Lost connection and no reconnector available.');
     }
 
     /**
