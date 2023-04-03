@@ -485,15 +485,19 @@ class ManticoreGrammar extends Grammar
     /**
      * Escaping characters in query string
      */
-    public function escape(string $binding): string
+    public static function escape(string $binding, ?array $allowEscapingSymbols = []): string
     {
         $binding = str_replace(["\\"], ["\\\\\\\\"], $binding);
 
-        return str_replace(
-            ["'", '!', '"', '$', '(', ')', '-', '/', '<', '@', '^', '|', '~'],
-            ["\'", '\!', '\"', '\$', '\(', '\)', '\-', '\/', '\<', '\@', '\^', '\|', '\~'],
-            $binding
-        );
+        $search = ["'", '!', '"', '$', '(', ')', '-', '/', '<', '@', '^', '|', '~'];
+        $replace = ["\'", '\!', '\"', '\$', '\(', '\)', '\-', '\/', '\<', '\@', '\^', '\|', '\~'];
+
+        foreach ($allowEscapingSymbols as $allowEscapingSymbol) {
+            unset($search[array_search($allowEscapingSymbol, $search)]);
+            unset($replace[array_search('\\' . $allowEscapingSymbol, $replace)]);
+        }
+
+        return str_replace($search, $replace, $binding);
     }
 
     /**

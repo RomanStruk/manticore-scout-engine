@@ -4,6 +4,7 @@ namespace RomanStruk\ManticoreScoutEngine;
 
 use Illuminate\Database\Eloquent\Collection;
 use RomanStruk\ManticoreScoutEngine\Console\IndexCommand;
+use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreMysqlEngine;
 use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreGrammar;
 use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreConnection;
@@ -34,6 +35,10 @@ class ManticoreServiceProvider extends ServiceProvider
 
     protected function configureMysqlEngine()
     {
+        $this->app->bind(Builder::class, function ($app) {
+            return new Builder(config('manticore'));
+        });
+
         $this->app->bind(ManticoreMysqlEngine::class, function ($app) {
             return new ManticoreMysqlEngine(config('manticore'));
         });

@@ -4,6 +4,10 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.2.4 (03.04.2023)
+- mysql reconnecting
+- configure auto escaping search phrase `config('manticore.auto_escape_search_phrase')`
+
 ### 5.2.2 (22.03.2023)
 - [bug] bind double to PARAM_INT is returned
 

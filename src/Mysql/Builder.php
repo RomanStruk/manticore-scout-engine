@@ -69,8 +69,11 @@ class Builder
         'order' => [],
     ];
 
-    public function __construct()
+    protected bool $autoEscaping = true;
+
+    public function __construct(array $config = [])
     {
+        $this->autoEscaping = $config['auto_escape_search_phrase'];
         $this->grammar = app(ManticoreGrammar::class);
         $this->connection = app(ManticoreConnection::class);
 
@@ -124,7 +127,7 @@ class Builder
         $this->search = $search;
 
         if (!empty($this->search)) {
-            $this->addBinding($search, 'search');
+            $this->addBinding($search, 'search', $this->autoEscaping);
         }
 
         return $this;
@@ -153,7 +156,12 @@ class Builder
         $this->fullTextOperators['quorum_matching_operator'] = true;
 
         $this->bindings['search'] = [];
-        $escapedSearch = $this->grammar->escape($this->search);
+
+        if ($this->autoEscaping === true){
+            $escapedSearch = $this->grammar->escape($this->search);
+        } else {
+            $escapedSearch = $this->search;
+        }
 
         $this->addBinding('"'.$escapedSearch.'"/' . $operator, 'search', false);
 
@@ -177,7 +185,12 @@ class Builder
         $this->fullTextOperators['proximity_search_operator'] = true;
 
         $this->bindings['search'] = [];
-        $escapedSearch = $this->grammar->escape($this->search);
+
+        if ($this->autoEscaping === true){
+            $escapedSearch = $this->grammar->escape($this->search);
+        } else {
+            $escapedSearch = $this->search;
+        }
 
         $this->addBinding('"'.$escapedSearch.'"~' . $operator, 'search', false);
 
@@ -685,7 +698,6 @@ class Builder
 
         return $this;
     }
-
 
     /**
      * Dump the current SQL and bindings.
