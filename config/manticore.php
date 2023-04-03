@@ -45,4 +45,19 @@ return [
     */
 
     'paginate_max_matches' => 1000,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Escaping characters in query string
+    |--------------------------------------------------------------------------
+    |
+    | As some characters are used as operators in the query string, they should be escaped to avoid query errors or unwanted matching conditions.
+    |
+    | See: https://manual.manticoresearch.com/Searching/Full_text_matching/Escaping#Escaping-characters-in-query-string
+    |
+    | Set false for disable auto escaping
+    |
+    */
+
+    'auto_escape_search_phrase' => true,
 ];
