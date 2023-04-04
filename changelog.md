@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.2.5 (04.04.2023)
+- default config for mysql builder `auto_escape_search_phrase`
+
 ### 5.2.4 (03.04.2023)
 - mysql reconnecting
 - configure auto escaping search phrase `config('manticore.auto_escape_search_phrase')`

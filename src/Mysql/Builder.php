@@ -73,7 +73,7 @@ class Builder
 
     public function __construct(array $config = [])
     {
-        $this->autoEscaping = $config['auto_escape_search_phrase'];
+        $this->autoEscaping = $config['auto_escape_search_phrase'] ?? true;
         $this->grammar = app(ManticoreGrammar::class);
         $this->connection = app(ManticoreConnection::class);
 
