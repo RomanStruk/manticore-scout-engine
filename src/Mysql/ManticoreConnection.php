@@ -133,7 +133,7 @@ class ManticoreConnection
     /**
      * Get the elapsed time since a given starting point.
      */
-    protected function getElapsedTime(int $start): float
+    protected function getElapsedTime(float $start): float
     {
         return round((microtime(true) - $start) * 1000, 2);
     }
