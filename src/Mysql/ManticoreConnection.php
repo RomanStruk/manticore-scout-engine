@@ -75,8 +75,6 @@ class ManticoreConnection
 
     protected function runQueryCallback($query, $bindings, Closure $callback, $recursion = false)
     {
-        $this->reconnectIfMissingConnection();
-
         $start = microtime(true);
 
         try {
@@ -110,16 +108,6 @@ class ManticoreConnection
     public static function hasGoneAway(\PDOException $e): bool
     {
         return $e->getCode() == 'HY000' && stristr($e->getMessage(), 'server has gone away');
-    }
-
-    /**
-     * Reconnect to the database if a PDO connection is missing.
-     */
-    public function reconnectIfMissingConnection(): void
-    {
-        if ($this->getPdo()->getAttribute(PDO::ATTR_SERVER_INFO) == 'MySQL server has gone away') {
-            $this->reconnect();
-        }
     }
 
     /**
