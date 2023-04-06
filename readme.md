@@ -74,6 +74,13 @@ Set up your `paginate_max_matches` in `manticore.php` config file
 ```
 Set `null` for calculate offset + limit
 
+As some characters are used as operators in the query string, they should be escaped to avoid query errors or unwanted matching conditions.
+Set up your `auto_escape_search_phrase` in `manticore.php` config file
+```php
+'auto_escape_search_phrase' => true,
+```
+Set `false` for disable auto escape special symbols `!    "    $    '    (    )    -    /    <    @    \    ^    |    ~`
+
 Other parameters for queries can be specified in the model
 ```php
 public function scoutMetadata(): array
