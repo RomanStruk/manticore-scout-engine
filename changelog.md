@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.5.6 (20.04.2023)
+- update support laravel version
+
 ### 4.5.5 (06.04.2023)
 - [bug] reconnect mysql
 

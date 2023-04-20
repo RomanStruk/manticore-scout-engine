@@ -125,9 +125,9 @@ class ManticoreTest extends TestCase
         })->get();
 
         $facets = collect($searchable->getFacet('brand_name'));
-        $this->assertSame(5, $facets->firstWhere('key', 'Brand Four')['count']);
-        $this->assertSame(3, $facets->firstWhere('key', 'Brand Nine')['count']);
-        $this->assertSame(3, $facets->firstWhere('key', 'Brand Ten')['count']);
+        $this->assertSame('5', $facets->firstWhere('key', 'Brand Four')['count']);
+        $this->assertSame('3', $facets->firstWhere('key', 'Brand Nine')['count']);
+        $this->assertSame('3', $facets->firstWhere('key', 'Brand Ten')['count']);
 
         $distinctSearchable = Product::search('', function (Builder $builder) {
             return $builder
@@ -135,9 +135,9 @@ class ManticoreTest extends TestCase
         })->get();
 
         $facets = collect($distinctSearchable->getFacet('brand_name'));
-        $this->assertSame(4, $facets->firstWhere('key', 'Brand Four')['distinct']);
-        $this->assertSame(3, $facets->firstWhere('key', 'Brand Nine')['distinct']);
-        $this->assertSame(2, $facets->firstWhere('key', 'Brand Ten')['distinct']);
+        $this->assertSame('4', $facets->firstWhere('key', 'Brand Four')['distinct']);
+        $this->assertSame('3', $facets->firstWhere('key', 'Brand Nine')['distinct']);
+        $this->assertSame('2', $facets->firstWhere('key', 'Brand Ten')['distinct']);
     }
 
     /** @test */
@@ -156,9 +156,9 @@ class ManticoreTest extends TestCase
         })->get();
 
         $facets = collect($searchable->getFacet('fprice_range'));
-        $this->assertSame(1, $facets->firstWhere('brand_name', 'Brand Nine')['count']);
-        $this->assertSame(1, $facets->firstWhere('brand_name', 'Brand Ten')['count']);
-        $this->assertSame(2, $facets->firstWhere('brand_name', 'Brand One')['count']);
+        $this->assertSame('1', $facets->firstWhere('brand_name', 'Brand Nine')['count']);
+        $this->assertSame('1', $facets->firstWhere('brand_name', 'Brand Ten')['count']);
+        $this->assertSame('2', $facets->firstWhere('brand_name', 'Brand One')['count']);
     }
 
     /** @test */
