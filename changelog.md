@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.2.8 (16.05.2023)
+- fix facet by
+
 ### 5.2.7 (06.04.2023)
 - update `readme.md`
 - fix `getElapsedTime()` type hint
