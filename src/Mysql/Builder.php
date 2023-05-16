@@ -490,7 +490,7 @@ class Builder
     public function facet(string $field, ?string $by = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
     {
         $type = 'Basic';
-        $by = !is_null($by) ?: $field;
+        $by = !is_null($by) ? $by: $field;
 
         $this->facets[] = compact('type', 'field', 'by', 'limit', 'sortBy', 'direction');
 
