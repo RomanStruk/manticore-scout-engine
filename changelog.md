@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.2.9 (22.05.2023)
+- "laravel/scout": "^9.5|^10.0",
+
 ### 5.2.8 (16.05.2023)
 - fix facet by
 
