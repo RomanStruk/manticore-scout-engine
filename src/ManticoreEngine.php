@@ -20,7 +20,7 @@ class ManticoreEngine extends Engine
     public function __construct(array $config)
     {
         $this->manticore = new Client($config['connection']);
-        $this->config = $config['paginate_max_matches'];
+        $this->config = $config;
     }
 
     /**
