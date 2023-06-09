@@ -18,7 +18,7 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "orchestra/testbench": "8",
+        "orchestra/testbench": "^8.5.0",
         "phpunit/phpunit": "^9.5",
         "nunomaduro/phpinsights": "dev-master",
         "nunomaduro/collision": "v6.x-dev"
