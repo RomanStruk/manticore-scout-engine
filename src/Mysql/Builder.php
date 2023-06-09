@@ -158,7 +158,7 @@ class Builder
         $this->bindings['search'] = [];
 
         if ($this->autoEscaping === true){
-            $escapedSearch = $this->grammar->escape($this->search);
+            $escapedSearch = $this->grammar->escapeQueryString($this->search);
         } else {
             $escapedSearch = $this->search;
         }
@@ -187,7 +187,7 @@ class Builder
         $this->bindings['search'] = [];
 
         if ($this->autoEscaping === true){
-            $escapedSearch = $this->grammar->escape($this->search);
+            $escapedSearch = $this->grammar->escapeQueryString($this->search);
         } else {
             $escapedSearch = $this->search;
         }
@@ -560,10 +560,10 @@ class Builder
         }
 
         if (is_array($value)) {
-            $value = array_map(fn($v) => $escape && is_string($v) ? $this->grammar->escape($v) : $v, $value);
+            $value = array_map(fn($v) => $escape && is_string($v) ? $this->grammar->escapeQueryString($v) : $v, $value);
             $this->bindings[$type] = array_values(array_merge($this->bindings[$type], $value));
         } else {
-            $this->bindings[$type][] = $escape && is_string($value) ? $this->grammar->escape($value) : $value;
+            $this->bindings[$type][] = $escape && is_string($value) ? $this->grammar->escapeQueryString($value) : $value;
         }
 
         return $this;

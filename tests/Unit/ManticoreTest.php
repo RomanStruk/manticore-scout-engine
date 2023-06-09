@@ -5,6 +5,7 @@ namespace RomanStruk\ManticoreScoutEngine\Tests\Unit;
 use Illuminate\Support\Facades\Artisan;
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreConnection;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreGrammar;
 use RomanStruk\ManticoreScoutEngine\Tests\TestCase;
 use RomanStruk\ManticoreScoutEngine\Tests\TestModels\Product;
 
@@ -203,5 +204,24 @@ class ManticoreTest extends TestCase
         })->get();
 
         $this->assertSame(1, $searchable->count());
+    }
+
+    /** @test */
+    public function it_can_switch_escaping()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', false);
+
+        $searchableWithoutEscaping = Product::search('smartphone !Apple')->get();
+        $searchableWithCustomEscaping = Product::search(ManticoreGrammar::escapeQueryString('smartphone !Apple'))->get();
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', true);
+
+        $searchableWithEscaping = Product::search('smartphone !Apple')->get();
+
+        $this->assertSame(0, $searchableWithoutEscaping->count());
+        $this->assertSame(1, $searchableWithCustomEscaping->count());
+        $this->assertSame(1, $searchableWithEscaping->count());
     }
 }

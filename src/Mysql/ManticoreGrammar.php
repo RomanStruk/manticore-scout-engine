@@ -485,7 +485,7 @@ class ManticoreGrammar extends Grammar
     /**
      * Escaping characters in query string
      */
-    public static function escape(string $binding, ?array $allowEscapingSymbols = []): string
+    public static function escapeQueryString(string $binding, ?array $allowEscapingSymbols = []): string
     {
         $binding = str_replace(["\\"], ["\\\\\\\\"], $binding);
 

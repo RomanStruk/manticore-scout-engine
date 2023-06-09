@@ -4,6 +4,10 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.3.0 (09.06.2023)
+- `ManticoreGrammar::escape()` is renamed to `ManticoreGrammar::escapeQueryString()` method that was reserved by laravel in the last version
+- updated dev composer.json `orchestra/testbench: ^8.5.0`
+
 ### 5.2.9 (22.05.2023)
 - "laravel/scout": "^9.5|^10.0",
 
