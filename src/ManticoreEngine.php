@@ -4,11 +4,12 @@ namespace RomanStruk\ManticoreScoutEngine;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Manticoresearch\Client;
+use Manticoresearch\ResultSet;
+use Manticoresearch\Search;
 
 class ManticoreEngine extends Engine
 {
@@ -70,9 +71,7 @@ class ManticoreEngine extends Engine
         $this->options['max_matches'] = $this->getMaxMatches($builder->limit);
 
         return $this->performSearch($builder, array_filter([
-            'where' => $builder->wheres,
-            'whereIn' => $builder->whereIns,
-            'whereRaw' => property_exists($builder, 'whereRaws') ? $builder->whereRaws : [],
+            'filter' => [$builder->wheres, $builder->whereIns],
             'limit' => $builder->limit,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
         ]));
@@ -88,47 +87,42 @@ class ManticoreEngine extends Engine
      */
     protected function performSearch(Builder $builder, array $searchParams)
     {
-        $option = collect($this->options)->map(fn($v, $k) => $k . '=' . $v)->implode(', ');
-
-        $manticoreQuery = DB::table($builder->index ?: $builder->model->searchableAs());
+        $index = $this->manticore->index($builder->index ?: $builder->model->searchableAs());
 
         if ($builder->callback) {
             $result = call_user_func(
                 $builder->callback,
-                $manticoreQuery,
+                $index,
                 $builder->query,
                 []
             );
-            if ($result instanceof \Illuminate\Database\Query\Builder) {
-                return $this->manticore->sql([
-                    'body' => [
-                        'query' => $this->getEloquentSqlWithBindings($result) . " OPTION {$option};",
-                    ],
-                ]);
+            if ($result instanceof Search) {
+                return $result->get();
             }
 
             return $result;
         }
-        foreach ($searchParams as $method => $searchParam) {
-            if (is_array($searchParam)) {
-                foreach ($searchParam as $key => $value) {
-                    $manticoreQuery->{$method}($key, $value);
-                }
-            } else {
-                $manticoreQuery->{$method}($searchParam);
+
+        $search = $index->search($builder->query);
+
+        foreach ($this->options as $key => $option) {
+            $search->option($key, $option);
+        }
+
+        foreach ($searchParams['filter'] ?? [] as $filters) {
+            foreach ($filters as $key => $value) {
+                $search->filter($key,'gte', $value);
             }
         }
-        if ($builder->query !== '') {
-            $manticoreQuery->whereRaw("MATCH(?)", [$builder->query]);
+        if ($searchParams['limit'] ?? false){
+            $search->limit($searchParams['limit']);
         }
 
-        $query = $this->getEloquentSqlWithBindings($manticoreQuery) . " OPTION {$option};";
+        foreach ($searchParams['orderBy'] ?? [] as $sort){
+            $search->sort(...$sort);
+        }
 
-        return $this->manticore->sql([
-            'body' => [
-                'query' => $query,
-            ],
-        ]);
+        return $search->get();
     }
 
     /**
@@ -147,47 +141,44 @@ class ManticoreEngine extends Engine
         $this->options['max_matches'] = $this->config['paginate_max_matches'] ?: ($offset + $perPage);
 
         return $this->performSearch($builder, array_filter([
-            'where' => $builder->wheres,
-            'whereIn' => $builder->whereIns,
-            'whereRaw' => property_exists($builder, 'whereRaws') ? $builder->whereRaws : [],
-            'limit' => $perPage,
+            'filter' => [$builder->wheres, $builder->whereIns],
+            'limit' => $builder->limit,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
-            'offset' => $offset,
         ]));
     }
 
     /**
      * Pluck and return the primary keys of the given results.
      *
-     * @param array $results
+     * @param ResultSet $results
      *
      * @return \Illuminate\Support\Collection
      */
     public function mapIds($results)
     {
-        if ($results['hits']['total'] === 0) {
+        if ($results->getTotal() === 0) {
             return collect();
         }
 
-        return collect($results['hits']['hits'])->pluck('_id');
+        return collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id');
     }
 
     /**
      * Map the given results to instances of the given model.
      *
      * @param Builder $builder
-     * @param array $results
+     * @param ResultSet $results
      * @param Model $model
      *
      * @return Collection
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if ($results['hits']['total'] === 0) {
+        if ($results->getTotal() === 0) {
             return $model->newCollection();
         }
 
-        $objectIds = collect($results['hits']['hits'])->pluck('_id')->all();
+        $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -204,18 +195,18 @@ class ManticoreEngine extends Engine
      * Map the given results to instances of the given model via a lazy collection.
      *
      * @param Builder $builder
-     * @param array $results
+     * @param ResultSet $results
      * @param Model $model
      *
      * @return LazyCollection
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if ($results['hits']['total'] === 0) {
+        if ($results->getTotal() === 0) {
             return LazyCollection::make($model->newCollection());
         }
 
-        $objectIds = collect($results['hits']['hits'])->pluck('_id')->all();
+        $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -231,13 +222,13 @@ class ManticoreEngine extends Engine
     /**
      * Get the total count from a raw result returned by the engine.
      *
-     * @param array $results
+     * @param ResultSet $results
      *
      * @return int
      */
     public function getTotalCount($results): int
     {
-        return $results['hits']['total'];
+        return $results->getTotal();
     }
 
     /**
@@ -305,29 +296,6 @@ class ManticoreEngine extends Engine
     }
 
     /**
-     * Get the filter array for the query.
-     *
-     * @param Builder $builder
-     *
-     * @return array
-     */
-    protected function filters(Builder $builder): array
-    {
-        $filters = [];
-        foreach ($builder->whereIns as $key => $values) {
-            $filters['filter'] = [$key, 'in', $values,];
-        }
-        foreach ($builder->wheres as $key => $values) {
-            if (! array_key_exists($key, $builder->model->scoutMetadata())) {
-                continue;
-            }
-            $filters['filter'] = [$key, '=', $values,];
-        }
-
-        return $filters;
-    }
-
-    /**
      * Get the sort array for the query.
      *
      * @param Builder $builder
@@ -355,33 +323,5 @@ class ManticoreEngine extends Engine
         }
 
         return $max ?: 1000;
-    }
-
-    /**
-     * Combines SQL and its bindings
-     *
-     * @param \Illuminate\Database\Query\Builder $query
-     *
-     * @return string
-     */
-    public function getEloquentSqlWithBindings(\Illuminate\Database\Query\Builder $query): string
-    {
-        return vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
-            return is_string($binding) ? "'" . $this->escape($binding) . "'" : $binding;
-        })->toArray());
-    }
-
-    /**
-     * Escaping characters in query string
-     */
-    protected function escape(string $binding): string
-    {
-        $binding = str_replace(["\\"], ["\\\\\\\\"], $binding);
-
-        return str_replace(
-            ["'", '!', '"', '$', '(', ')', '-', '/', '<', '@', '^', '|', '~'],
-            ["\'", '\\\!', '\\\"', '\\\$', '\\\(', '\\\)', '\\\-', '\\\/', '\\\<', '\\\@', '\\\^', '\\\|', '\\\~'],
-            $binding
-        );
     }
 }
