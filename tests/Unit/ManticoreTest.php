@@ -81,6 +81,17 @@ class ManticoreTest extends TestCase
     }
 
     /** @test */
+    public function it_order_by_raw()
+    {
+        Product::factory()->create(['name' => 'Officiis quidem sint ex omnis sint. Debitis atque eum modi similique sunt neque laudantium perspiciatis. Modi ipsa aut commodi et sunt non amet']);
+        Product::factory()->create(['name' => 'Atque sed aut adipisci odio magnam. Offical in veniam minus et.']);
+
+        $searchable = Product::search('offic', fn(Builder $builder) => $builder->orderByRaw('weight() DESC'))->get();
+
+        $this->assertCount(2, $searchable);
+    }
+
+    /** @test */
     public function it_group_by_field()
     {
         Product::factory()->create(['category_id' => 1]);
