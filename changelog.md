@@ -4,6 +4,12 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.6.0 (28.08.2023)
+- Percolate Query
+- Autocomplete `only mysql-builder`
+- Spell correction `only mysql-builder`
+- remove escape for where (using only for match)
+
 ### 4.5.6 (20.04.2023)
 - update support laravel version
 

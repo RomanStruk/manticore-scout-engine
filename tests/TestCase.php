@@ -14,9 +14,11 @@ abstract class TestCase extends BaseTestCase
     public function getEnvironmentSetUp($app)
     {
         include_once __DIR__ . '/stubs/create_products_table.php.stub';
+        include_once __DIR__ . '/stubs/create_percolate_products_table.php.stub';
 
         // run the up() method (perform the migration)
         (new \CreateProductsTable)->up();
+        (new \CreatePercolateProductsTable)->up();
     }
 
     protected function getPackageProviders($app)

@@ -4,7 +4,7 @@ namespace RomanStruk\ManticoreScoutEngine\Tests\Unit;
 
 use Illuminate\Support\Facades\Artisan;
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
-use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreConnection;
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreGrammar;
 use RomanStruk\ManticoreScoutEngine\Tests\TestCase;
 use RomanStruk\ManticoreScoutEngine\Tests\TestModels\Product;
 
@@ -77,6 +77,19 @@ class ManticoreTest extends TestCase
         })->first();
 
         $this->assertTrue($searchable1->id != $searchable2->id);
+    }
+
+    /** @test */
+    public function it_order_by_raw()
+    {
+        Product::factory()->create(['name' => 'Officiis quidem sint ex omnis sint. Debitis atque eum modi similique sunt neque laudantium perspiciatis. Modi ipsa aut commodi et sunt non amet']);
+        Product::factory()->create(['name' => 'Atque sed aut adipisci odio magnam. Offical in veniam minus et.']);
+
+        $searchable = Product::search('offic', function(Builder $builder){
+            return $builder->orderByRaw('weight() DESC');
+        })->get();
+
+        $this->assertCount(2, $searchable);
     }
 
     /** @test */
@@ -203,5 +216,62 @@ class ManticoreTest extends TestCase
         })->get();
 
         $this->assertSame(1, $searchable->count());
+    }
+
+    /** @test */
+    public function it_can_switch_escaping()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', false);
+
+        $searchableWithoutEscaping = Product::search('smartphone !Apple')->get();
+        $searchableWithCustomEscaping = Product::search(ManticoreGrammar::escape('smartphone !Apple'))->get();
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', true);
+
+        $searchableWithEscaping = Product::search('smartphone !Apple')->get();
+
+        $this->assertSame(0, $searchableWithoutEscaping->count());
+        $this->assertSame(1, $searchableWithCustomEscaping->count());
+        $this->assertSame(1, $searchableWithEscaping->count());
+    }
+
+    /** @test */
+    public function it_throw_escaping_exception()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', false);
+
+        $this->expectExceptionCode(42000);
+        Product::search('smartphone "Apple')->get();
+    }
+
+    /** @test */
+    public function it_avoid_throw_escaping_exception()
+    {
+        Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', false);
+
+        $searchable = Product::search(ManticoreGrammar::escape('smartphone "Apple'))->get();
+
+        $this->assertSame(1, $searchable->count());
+    }
+
+    /** @test */
+    public function it_avoid_throw_escaping_exception_with_where()
+    {
+        Product::factory()->create(['brand_name' => 'apple']);
+        Product::factory()->create(['brand_name' => 'hp']);
+
+        $this->app['config']->set('manticore.auto_escape_search_phrase', false);
+
+        $searchable1 = Product::search('')->where('brand_name', 'hp')->get();
+        $searchable2 = Product::search('')->where('brand_name', 'hp"\\^')->get();
+
+        $this->assertSame(1, $searchable1->count());
+        $this->assertSame(0, $searchable2->count());
     }
 }
