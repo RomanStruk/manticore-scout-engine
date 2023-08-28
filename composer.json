@@ -12,7 +12,7 @@
     "require": {
         "php": "^7.4",
         "illuminate/support": "~8|~9",
-        "manticoresoftware/manticoresearch-php": "^2.1",
+        "manticoresoftware/manticoresearch-php": "^2.2|^3.0",
         "laravel/scout": "^9.4",
         "ext-pdo": "*",
         "ext-json": "*"

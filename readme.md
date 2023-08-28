@@ -53,12 +53,14 @@ public function scoutIndexMigration(): array
         'fields' => [
             'id' => ['type' => 'bigint'],
             'name' => ['type' => 'text'],
+            'category' => ['type' => 'string stored indexed'],// string|text [stored|attribute] [indexed]
         ],
         'settings' => [
             'min_prefix_len' => '3',
             'min_infix_len' => '3',
             'prefix_fields' => 'name',
             'expand_keywords' => '1',
+            //'engine' => 'columnar', // [default] row-wise - traditional storage available in Manticore Search out of the box; columnar - provided by Manticore Columnar Library
         ],
     ];
 }
@@ -73,6 +75,13 @@ Set up your `paginate_max_matches` in `manticore.php` config file
 'paginate_max_matches' => 1000,
 ```
 Set `null` for calculate offset + limit
+
+As some characters are used as operators in the query string, they should be escaped to avoid query errors or unwanted matching conditions.
+Set up your `auto_escape_search_phrase` in `manticore.php` config file
+```php
+'auto_escape_search_phrase' => true,
+```
+Set `false` for disable auto escape special symbols `!    "    $    '    (    )    -    /    <    @    \    ^    |    ~`
 
 Other parameters for queries can be specified in the model
 ```php
@@ -122,6 +131,77 @@ use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 $products = Product::search('cat dog mouse', function (Builder $builder) {
     return $builder->setProximitySearchOperator(5);
 })->get();
+```
+
+Autocomplete (or word completion) is a feature in which an application predicts the rest of a word a user is typing. On websites, it's used in search boxes, where a user starts to type a word, and a dropdown with suggestions pops up so the user can select the ending from the list.
+```php
+use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
+
+//[doc] My cat loves my dog. The cat (Felis catus) is a domestic species of small carnivorous mammal.
+
+$autocomplete = Product::search('my*',function (Builder $builder) {
+    return $builder->autocomplete(['"','^'], true); // "" ^ * allow full-text operators; stats - Show statistics of keywords, default is 0
+})->raw();
+// $autocomplete<array> "my", "my cat", "my dog"
+```
+
+Spell correction
+```php
+use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
+
+//[doc] Crossbody Bag with Tassel
+//[doc] microfiber sheet set
+//[doc] Pet Hair Remover Glove
+
+$result = Product::search('bagg with tasel',function (Builder $builder) {
+    return $builder->spellCorrection(true) // correct first word
+})->raw();
+// $result<array> 0 => ['suggest' => "bag"]
+
+$result = Product::search('bagg with tasel',function (Builder $builder) {
+    return $builder->spellCorrection() // correct last word
+})->raw();
+// $result<array> 0 => ['suggest' => "tassel"]
+
+$result = Product::search('bagg with tasel',function (Builder $builder) {
+    return $builder->spellCorrection(false, true) // correct last word and return sentence
+})->raw();
+// $result<array> 0 => ['suggest' => "bagg with tassel"]
+```
+### Percolate Query
+To create a migration, specify the required fields in the searchable model
+```php
+public function scoutIndexMigration(): array
+{
+    return [
+            'fields' => [
+                'title' => ['type' => 'text'],
+                'color' => ['type' => 'string'],
+            ],
+            'settings' => [
+                'type' => 'pq'
+            ],
+    ];
+}
+
+public function toSearchableArray(): array
+{
+    return array_filter([
+        'id' => $this->name,
+        'query' => "@title {$this->title}",
+        'filters' => $this->color ? "color='{$this->color}'" : null,
+    ]);
+}
+```
+
+Percolate queries are also known as Persistent queries, Prospective search, document routing, search in reverse, and inverse search.
+https://manual.manticoresearch.com/Searching/Percolate_query#Percolate-Query
+```php
+use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
+
+$products = PercolateProduct::search(json_encode(['title' =>'Beautiful shoes']),
+    fn(Builder $builder) => $builder->percolateQuery(docs: true, docsJson: true)
+)->get();
 ```
 
 ## Change log
