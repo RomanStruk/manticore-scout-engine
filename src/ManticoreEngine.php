@@ -94,7 +94,8 @@ class ManticoreEngine extends Engine
                 $builder->callback,
                 $index,
                 $builder->query,
-                []
+                [],
+                $this->manticore
             );
             if ($result instanceof Search) {
                 return $result->get();
@@ -150,12 +151,20 @@ class ManticoreEngine extends Engine
     /**
      * Pluck and return the primary keys of the given results.
      *
-     * @param ResultSet $results
+     * @param ResultSet|array $results
      *
      * @return \Illuminate\Support\Collection
      */
     public function mapIds($results)
     {
+        if (is_array($results) || is_null($results)){
+            if (empty($results)) {
+                return collect();
+            }
+
+            return collect($results)->pluck('_id');
+        }
+
         if ($results->getTotal() === 0) {
             return collect();
         }
@@ -167,18 +176,26 @@ class ManticoreEngine extends Engine
      * Map the given results to instances of the given model.
      *
      * @param Builder $builder
-     * @param ResultSet $results
+     * @param ResultSet|array $results
      * @param Model $model
      *
      * @return Collection
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if ($results->getTotal() === 0) {
-            return $model->newCollection();
-        }
+        if (is_array($results) || is_null($results)){
+            if (empty($results)) {
+                return $model->newCollection();
+            }
 
-        $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
+            $objectIds = collect($results)->pluck('_id')->all();
+        }else{
+            if ($results->getTotal() === 0) {
+                return $model->newCollection();
+            }
+
+            $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
+        }
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -202,11 +219,19 @@ class ManticoreEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if ($results->getTotal() === 0) {
-            return LazyCollection::make($model->newCollection());
-        }
+        if (is_array($results) || is_null($results)){
+            if (empty($results)) {
+                return LazyCollection::make($model->newCollection());
+            }
 
-        $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
+            $objectIds = collect($results)->pluck('_id')->all();
+        }else{
+            if ($results->getTotal() === 0) {
+                return LazyCollection::make($model->newCollection());
+            }
+
+            $objectIds = collect($results->getResponse()->getResponse()['hits']['hits'] ?? [])->pluck('_id')->all();
+        }
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -228,6 +253,14 @@ class ManticoreEngine extends Engine
      */
     public function getTotalCount($results): int
     {
+        if (is_null($results)){
+            return 0;
+        }
+
+        if (is_array($results) ){
+            return count($results);
+        }
+
         return $results->getTotal();
     }
 

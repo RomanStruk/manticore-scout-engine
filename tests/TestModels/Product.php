@@ -29,13 +29,15 @@ class Product extends Model
                 'category_id' => ['type' => 'integer'],
                 'created_at' => ['type' => 'timestamp'],
                 'property' => ['type' => 'string'],
-                'category' => ['type' => 'text'],
+                'category' => ['type' => 'string  stored indexed'],
             ],
             'settings' => [
-                'min_prefix_len' => '3',
-                'min_infix_len' => '3',
+//                'min_prefix_len' => '3',
+                'min_infix_len' => '1',
                 'prefix_fields' => 'name',
                 'expand_keywords' => '1',
+                'bigram_index' => 'all',
+//                'engine' => 'columnar',
             ],
             'silent' => false, // ignore_nonexistent_columns - default 0
         ];
@@ -44,7 +46,6 @@ class Product extends Model
     public function toSearchableArray(): array
     {
         return [
-//            'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
             'brand_name' => $this->brand_name,

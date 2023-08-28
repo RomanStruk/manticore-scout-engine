@@ -45,6 +45,18 @@ class ManticoreGrammar extends Grammar
     }
 
     /**
+     * Compile a call query into SQL.
+     */
+    public function compileCall(Builder $query): string
+    {
+        $component = $query->call['type'];
+
+        $method = 'compile' . ucfirst($component);
+
+        return $this->$method($query, $query->call['options']);
+    }
+
+    /**
      * Compile the components necessary for a select clause.
      */
     protected function compileComponents(Builder $query): array
@@ -60,6 +72,16 @@ class ManticoreGrammar extends Grammar
         }
 
         return $sql;
+    }
+
+    /**
+     * Compile the "options" portions of the call query.
+     */
+    protected function compileCallOptions(array $options): string
+    {
+        return trim(', ' . collect($options)
+                ->map(fn($v, $k) => (is_int($v) ? $v : "'{$v}'") . ' as ' . $k)
+                ->implode(', '));
     }
 
     /**
@@ -88,6 +110,62 @@ class ManticoreGrammar extends Grammar
         }
 
         return 'where match(?)';
+    }
+
+    /**
+     * Compile the "autocomplete" portions of the query.
+     */
+    protected function compileKeywords(Builder $query, array $options): string
+    {
+        if (empty($query->search)) {
+            throw new \Exception('Empty Search query!');
+        }
+
+        $options = $this->compileCallOptions($options);
+
+        return "CALL KEYWORDS(?, '{$query->index}'{$options});";
+    }
+
+    /**
+     * Compile the "SUGGEST" portions of the query.
+     */
+    protected function compileSuggest(Builder $query, array $options): string
+    {
+        if (empty($query->search)) {
+            throw new \Exception('Empty SUGGEST query!');
+        }
+
+        $options = $this->compileCallOptions($options);
+
+        return "CALL SUGGEST(?, '{$query->index}'{$options});";
+    }
+
+    /**
+     * Compile the "QSUGGEST" portions of the query.
+     */
+    protected function compileQSuggest(Builder $query, array $options): string
+    {
+        if (empty($query->search)) {
+            throw new \Exception('Empty search query!');
+        }
+
+        $options = $this->compileCallOptions($options);
+
+        return "CALL QSUGGEST(?, '{$query->index}'{$options});";
+    }
+
+    /**
+     * Compile the "Percolate Query" portions of the query.
+     */
+    protected function compilePercolateQuery(Builder $query, array $options): string
+    {
+        if (empty($query->search)) {
+            throw new \Exception('Empty PQ query!');
+        }
+
+        $options = $this->compileCallOptions($options);
+
+        return "CALL PQ('{$query->index}', ?{$options});";
     }
 
     /**

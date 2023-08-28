@@ -4,6 +4,12 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.5.0 (28.08.2023)
+- Percolate Query
+- Autocomplete `only mysql-builder`
+- Spell correction `only mysql-builder`
+- remove escape for where (using only for match)
+
 ### 5.4.0 (24.08.2023)
 - "manticoresoftware/manticoresearch-php": "^2.2|^3.0"
 

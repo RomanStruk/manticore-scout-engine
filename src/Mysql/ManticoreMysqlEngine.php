@@ -110,7 +110,8 @@ class ManticoreMysqlEngine extends Engine
                 $builder->callback,
                 $manticoreBuilder,
                 $builder->query,
-                []
+                [],
+                null
             );
 
             if ($result instanceof \RomanStruk\ManticoreScoutEngine\Mysql\Builder) {
@@ -193,11 +194,15 @@ class ManticoreMysqlEngine extends Engine
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if ($results['meta']['total'] == 0) {
+        if (array_key_exists('meta', $results) && $results['meta']['total'] == 0) {
             return $model->newCollection();
         }
 
-        $objectIds = collect($results['hits'])->pluck('id')->all();
+        if (array_key_exists('meta', $results)){
+            $objectIds = collect($results['hits'])->pluck('id')->all();
+        }else{
+            $objectIds = collect($results)->pluck('id')->all();
+        }
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -221,11 +226,15 @@ class ManticoreMysqlEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if ($results['meta']['total'] == 0) {
+        if (array_key_exists('meta', $results) && $results['meta']['total'] == 0) {
             return LazyCollection::make($model->newCollection());
         }
 
-        $objectIds = collect($results['hits'])->pluck('id')->all();
+        if (array_key_exists('meta', $results)){
+            $objectIds = collect($results['hits'])->pluck('id')->all();
+        }else{
+            $objectIds = collect($results)->pluck('id')->all();
+        }
 
         $objectIdPositions = array_flip($objectIds);
 
@@ -247,7 +256,11 @@ class ManticoreMysqlEngine extends Engine
      */
     public function getTotalCount($results): int
     {
-        return $results['meta']['total_found'];
+        if (array_key_exists('meta', $results)){
+            return $results['meta']['total_found'];
+        }
+
+        return !empty($results[0]['id']) ? count($results) : 0;
     }
 
     /**

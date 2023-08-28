@@ -62,6 +62,24 @@ class ManticoreConnection
         });
     }
 
+    public function call($sql, $bindings)
+    {
+        return $this->runQueryCallback($sql, $bindings, function ($query, $bindings) {
+            $statement = $this->prepared(
+                $this->getPdo()->prepare($query)
+            );
+
+            $this->bindValues($statement, $this->prepareBindings($bindings));
+
+            $execute = $statement->execute();
+            if ($execute === false) {
+                throw new \Exception(implode('|', $statement->errorInfo()));
+            }
+
+            return $statement->fetchAll(PDO::FETCH_ASSOC);
+        });
+    }
+
     public function bindValues(\PDOStatement $statement, array $bindings)
     {
         foreach ($bindings as $key => $value) {
@@ -85,10 +103,12 @@ class ManticoreConnection
                 return $this->runQueryCallback($query, $bindings, $callback, true);
             }
 
-            throw $e;
+            throw new QueryException(
+                'manticore', $query, $this->prepareBindings($bindings), $e
+            );
         } catch (\Exception $e) {
             throw new QueryException(
-                $query, $this->prepareBindings($bindings), $e
+                'manticore', $query, $this->prepareBindings($bindings), $e
             );
         }
 
