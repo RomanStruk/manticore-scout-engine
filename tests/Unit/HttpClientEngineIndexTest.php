@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use Laravel\Scout\EngineManager;
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 use RomanStruk\ManticoreScoutEngine\Tests\TestCase;
+use RomanStruk\ManticoreScoutEngine\Tests\TestModels\PercolateProduct;
 use RomanStruk\ManticoreScoutEngine\Tests\TestModels\Product;
 
 class HttpClientEngineIndexTest extends TestCase
@@ -30,7 +31,26 @@ class HttpClientEngineIndexTest extends TestCase
 
             Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
         }catch (\Exception $exception){
-            dump($exception);
+            self::fail($exception->getMessage());
+        }
+    }
+
+    /** @test */
+    public function it_create_percolate_manticore_index()
+    {
+        Artisan::call('manticore:index', ['model' => PercolateProduct::class]);
+
+        try {
+            PercolateProduct::search('', function ($index, $search, $options, $client){
+                $client->pq()->doc([
+                    'index' => $index->getName(),
+                    'body' => ['query'=>['match'=>['title'=>'shoes']]]
+                ]);
+            })->get();
+            $this->assertTrue(true);
+
+            Artisan::call('scout:delete-index', ['name' => app(PercolateProduct::class)->searchableAs()]);
+        }catch (\Exception $exception){
             self::fail($exception->getMessage());
         }
     }

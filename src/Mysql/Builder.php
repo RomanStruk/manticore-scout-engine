@@ -25,6 +25,8 @@ class Builder
 
     public array $facets = [];
 
+    public array $call = [];
+
     public bool $meta = false;
 
     public int $offset;
@@ -44,6 +46,16 @@ class Builder
      */
     public array $groups = [];
 
+    public array $bindings = [
+        'select' => [],
+        'search' => [],
+        'where' => [],
+        'groupBy' => [],
+        'options' => [],
+        'order' => [],
+        'calls' => [],
+    ];
+
     public array $options = [
         'max_matches' => 1000,
     ];
@@ -59,15 +71,6 @@ class Builder
     protected ManticoreGrammar $grammar;
 
     protected ManticoreConnection $connection;
-
-    public array $bindings = [
-        'select' => [],
-        'search' => [],
-        'where' => [],
-        'groupBy' => [],
-        'options' => [],
-        'order' => [],
-    ];
 
     protected bool $autoEscaping = true;
 
@@ -127,7 +130,11 @@ class Builder
         $this->search = $search;
 
         if (!empty($this->search)) {
-            $this->addBinding($search, 'search', $this->autoEscaping);
+            if ($this->autoEscaping){
+                $search = $this->grammar->escapeQueryString($search);
+            }
+
+            $this->addBinding($search, 'search');
         }
 
         return $this;
@@ -145,11 +152,11 @@ class Builder
             return $this;
         }
 
-        if (!is_float($operator) && !is_int($operator)){
+        if (!is_float($operator) && !is_int($operator)) {
             throw new InvalidArgumentException('Quorum matching operator must be a float or integer.');
         }
 
-        if ($this->fullTextOperators['proximity_search_operator'] === true){
+        if ($this->fullTextOperators['proximity_search_operator'] === true) {
             throw new InvalidArgumentException('Quorum matching operator and proximity search operator cannot be used together.');
         }
 
@@ -157,13 +164,13 @@ class Builder
 
         $this->bindings['search'] = [];
 
-        if ($this->autoEscaping === true){
+        if ($this->autoEscaping === true) {
             $escapedSearch = $this->grammar->escapeQueryString($this->search);
         } else {
             $escapedSearch = $this->search;
         }
 
-        $this->addBinding('"'.$escapedSearch.'"/' . $operator, 'search', false);
+        $this->addBinding('"' . $escapedSearch . '"/' . $operator, 'search');
 
         return $this;
     }
@@ -178,7 +185,7 @@ class Builder
             return $this;
         }
 
-        if ($this->fullTextOperators['quorum_matching_operator'] === true){
+        if ($this->fullTextOperators['quorum_matching_operator'] === true) {
             throw new InvalidArgumentException('Quorum matching operator and proximity search operator cannot be used together.');
         }
 
@@ -186,13 +193,13 @@ class Builder
 
         $this->bindings['search'] = [];
 
-        if ($this->autoEscaping === true){
+        if ($this->autoEscaping === true) {
             $escapedSearch = $this->grammar->escapeQueryString($this->search);
         } else {
             $escapedSearch = $this->search;
         }
 
-        $this->addBinding('"'.$escapedSearch.'"~' . $operator, 'search', false);
+        $this->addBinding('"' . $escapedSearch . '"~' . $operator, 'search');
 
         return $this;
     }
@@ -490,7 +497,7 @@ class Builder
     public function facet(string $field, ?string $by = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
     {
         $type = 'Basic';
-        $by = !is_null($by) ? $by: $field;
+        $by = ! is_null($by) ? $by : $field;
 
         $this->facets[] = compact('type', 'field', 'by', 'limit', 'sortBy', 'direction');
 
@@ -523,6 +530,140 @@ class Builder
     }
 
     /**
+     * Autocomplete (or word completion) is a feature in which an application predicts the rest of a word a user is typing.
+     * On websites, it's used in search boxes, where a user starts to type a word,
+     * and a dropdown with suggestions pops up so the user can select the ending from the list.
+     *
+     * @param array $allowOperators - using full-text operators *,^,""
+     * @param bool $stats - Show statistics of keywords, default is 0
+     * @param bool $foldWildcards - Fold wildcards, default is 0
+     * @param bool $foldLemmas - Fold morphological lemmas, default is 0
+     * @param bool $foldBlended - Fold blended words, default is 0
+     * @param string|null $sort - Sort output results by either 'docs' or 'hits'. Default no sorting
+     */
+    public function autocomplete(array $allowOperators = ['*'], bool $stats = false, bool $foldWildcards = false, bool $foldLemmas = false, bool $foldBlended = false, ?string $sort = null): static
+    {
+        $type = 'Keywords';
+        $options = [
+            'stats' => intval($stats),
+            'fold_wildcards' => intval($foldWildcards),
+            'fold_lemmas' => intval($foldLemmas),
+            'fold_blended' => intval($foldBlended),
+        ];
+
+        if (in_array($sort, ['docs', 'hits'])) {
+            $options['sort_mode'] = $sort;
+        }
+
+        $this->call = compact('type', 'options');
+
+        $this->bindings['search'] = [];
+
+        $search = $this->grammar->escapeQueryString($this->search, $allowOperators);
+
+        $this->addBinding($search, 'search');
+
+        return $this;
+    }
+
+    /**
+     * These commands provide all suggestions from the dictionary for a given word.
+     *
+     * @param bool $firstWord - true: will return suggestions only for the first word. false: will return suggestions only for the last word, ignoring the rest.
+     * @param bool $sentence - Returns the original sentence along with the last word replaced by the matched one.
+     * @param int $limit - Returns N top matches
+     * @param int $maxEdits - Keeps only dictionary words with a Levenshtein distance less than or equal to N
+     * @param bool $resultStats - Provides Levenshtein distance and document count of the found words
+     * @param int $deltaLen - Keeps only dictionary words with a length difference less than N
+     * @param int $maxMatches - Number of matches to keep
+     * @param int $reject - Rejected words are matches that are not better than those already in the match queue. They are put in a rejected queue that gets reset in case one actually can go in the match queue. This parameter defines the size of the rejected queue (as reject*max(max_matched,limit)). If the rejected queue is filled, the engine stops looking for potential matches
+     * @param bool $resultLine - alternate mode to display the data by returning all suggests, distances and docs each per one row
+     * @param bool $nonChar - do not skip dictionary words with non alphabet symbols
+     */
+    public function spellCorrection(
+        bool $firstWord = false,
+        bool $sentence = false,
+        int  $limit = 5,
+        int  $maxEdits = 4,
+        bool $resultStats = true,
+        int  $deltaLen = 3,
+        int  $maxMatches = 25,
+        int  $reject = 4,
+        bool $resultLine = false,
+        bool $nonChar = false,
+    ): static
+    {
+        if ($firstWord) {
+            $type = 'Suggest';
+        } else {
+            $type = 'QSuggest';
+        }
+        $options = [
+            'sentence' => intval($sentence),
+            'limit' => $limit,
+            'max_edits' => $maxEdits,
+            'result_stats' => intval($resultStats),
+            'delta_len' => $deltaLen,
+            'max_matches' => $maxMatches,
+            'reject' => $reject,
+            'result_line' => intval($resultLine),
+            'non_char' => intval($nonChar),
+        ];
+
+        $this->call = compact('type', 'options');
+
+        return $this;
+    }
+
+    /**
+     * Percolate queries are also known as Persistent queries, Prospective search, document routing, search in reverse, and inverse search.
+     *
+     * @param bool $docs - Return matching document ids
+     * @param bool $docsJson - Consider input documents are JSON or plain text
+     * @param bool $query - Return all info about matching query
+     * @param string|null $idFieldName - Use document's own id to show in the result
+     * @param bool $skipBadJson - Skip invalid JSON
+     * @param bool $verbose - Extended info in SHOW META
+     * @param bool $shift - Define the number which will be added to document ids if no docs_id fields provided (mostly relevant in distributed PQ modes)
+     * @param string $mode - Sharded distribution mode
+     */
+    public function percolateQuery(
+        bool    $docs = true,
+        bool    $docsJson = false,
+        bool    $query = true,
+        ?string $idFieldName = null,
+        bool    $skipBadJson = false,
+        bool    $verbose = false,
+        bool    $shift = false,
+        string  $mode = 'sharded'
+    ): static
+    {
+        $type = 'PercolateQuery';
+        $options = [
+            'docs' => intval($docs),
+            'docs_json' => intval($docsJson),
+            'query' => intval($query),
+            'skip_bad_json' => intval($skipBadJson),
+            'verbose' => intval($verbose),
+            'shift' => intval($shift),
+            'mode' => $mode,
+        ];
+
+        if (!is_null($idFieldName)) {
+            $options['docs_id'] = $idFieldName;
+        }
+
+        $this->call = compact('type', 'options');
+
+        $this->bindings['search'] = [];
+        $this->addBinding($this->search, 'search');
+
+        $this->meta = false;
+
+        return $this;
+    }
+
+    /**
      * Set the "option" value of the query.
      */
     public function option(string $key, string $value): Builder
@@ -547,23 +688,26 @@ class Builder
      */
     public function toSql(): string
     {
+        if (!empty($this->call)) {
+            return $this->grammar->compileCall($this);
+        }
+
         return $this->grammar->compileSelect($this);
     }
 
     /**
      * Add a binding to the query.
      */
-    public function addBinding($value, string $type = 'where', bool $escape = true): Builder
+    public function addBinding($value, string $type = 'where'): Builder
     {
         if (!array_key_exists($type, $this->bindings)) {
             throw new InvalidArgumentException("Invalid binding type: {$type}.");
         }
 
         if (is_array($value)) {
-            $value = array_map(fn($v) => $escape && is_string($v) ? $this->grammar->escapeQueryString($v) : $v, $value);
             $this->bindings[$type] = array_values(array_merge($this->bindings[$type], $value));
         } else {
-            $this->bindings[$type][] = $escape && is_string($value) ? $this->grammar->escapeQueryString($value) : $value;
+            $this->bindings[$type][] = $value;
         }
 
         return $this;
@@ -614,6 +758,12 @@ class Builder
      */
     public function runSelect(): array
     {
+        if (!empty($this->call)) {
+            return $this->connection->call(
+                $this->toSql(), $this->getBindings()
+            );
+        }
+
         return $this->connection->select(
             $this->toSql(), $this->getBindings(), $this->countSetRows(), $this->meta
         );
