@@ -16,6 +16,7 @@ class ManticoreGrammar extends Grammar
         'search',
         'wheres',
         'groups',
+        'groupSorts',
         'orders',
         'limit',
         'offset',
@@ -422,6 +423,15 @@ class ManticoreGrammar extends Grammar
         }
 
         return 'group by ' . $this->columnize($groups);
+    }
+
+    protected function compileGroupSorts(Builder $query, array $orders)
+    {
+        if (empty($orders)) {
+            return '';
+        }
+
+        return 'within group order by ' . implode(', ', $this->compileOrdersToArray($query, $orders));
     }
 
     /**

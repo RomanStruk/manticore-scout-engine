@@ -47,6 +47,12 @@ class Builder
     public array $groups = [];
 
     /**
+     * The groupings sorting for the query
+     * @var array
+     */
+    public array $groupSorts = [];
+
+    /**
      * The group N by fields parameter set
      *
      * @var int
@@ -58,6 +64,7 @@ class Builder
         'search' => [],
         'where' => [],
         'groupBy' => [],
+        'groupSort' => [],
         'options' => [],
         'order' => [],
         'calls' => [],
@@ -506,6 +513,24 @@ class Builder
     }
 
     /**
+     * Sorting inside a group
+     *
+     * @see https://manual.manticoresearch.com/Searching/Grouping#Sorting-inside-a-group
+     *
+     * @param string $column
+     * @param string $direction
+     * @return static
+     */
+    public function groupOrderBy($column, $direction = 'asc')
+    {
+        $this->groupSorts[] = [
+            'column' => $column,
+            'direction' => $direction,
+        ];
+        return $this;
+    }
+
+    /**
      * Add a facet where clause to the query.
      *
      * @param string $field
@@ -519,7 +544,7 @@ class Builder
     public function facet(string $field, ?string $by = null, ?int $limit = null, ?string $sortBy = null, ?string $direction = 'asc'): Builder
     {
         $type = 'Basic';
-        $by = ! is_null($by) ? $by : $field;
+        $by = !is_null($by) ? $by : $field;
 
         $this->facets[] = compact('type', 'field', 'by', 'limit', 'sortBy', 'direction');
 
