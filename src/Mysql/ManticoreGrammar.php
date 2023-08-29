@@ -418,7 +418,7 @@ class ManticoreGrammar extends Grammar
             return '';
         }
 
-        if ($query->groupN > 0) {
+        if ($query->groupN > 1) {
             return 'group ' . $query->groupN . ' by ' . $this->columnize($groups);
         }
 
