@@ -435,45 +435,71 @@ class Builder
 
     /**
      * Add an "order" for the search query.
+     *
+     * @param string $column
+     * @param string $direction
+     * @param bool $prepend
+     *
+     * @return static
      */
-    public function orderBy(string $column, string $direction = 'asc'): Builder
+    public function orderBy(string $column, string $direction = 'asc', bool $prepend = false): Builder
     {
-        $this->orders[] = [
+        $func = $prepend ? 'array_unshift' : 'array_push';
+
+        $func($this->orders, [
             'column' => $column,
             'direction' => strtolower($direction) == 'asc' ? 'asc' : 'desc',
-        ];
+        ]);
 
         return $this;
     }
 
     /**
      * Put the query's results in random order.
+     *
+     * @param int|null $seed
+     * @param bool $prepend
+     *
+     * @return static
      */
-    public function inRandomOrder(?int $seed = null)
+    public function inRandomOrder(?int $seed = null, bool $prepend = false)
     {
         if (!is_null($seed)) {
             $this->option('rand_seed', $seed);
         }
 
-        return $this->orderByRaw($this->grammar->compileRandom());
+        return $this->orderByRaw($this->grammar->compileRandom(), [], $prepend);
     }
 
     /**
      * Put the query's results in weight order.
+     *
+     * @param string $direction
+     * @param bool $prepend
+     *
+     * @return static
      */
-    public function inWeightOrder(string $direction = 'asc')
+    public function inWeightOrder(string $direction = 'asc', bool $prepend = false)
     {
-        return $this->orderByRaw($this->grammar->compileWeight($direction));
+        return $this->orderByRaw($this->grammar->compileWeight($direction), [], $prepend);
     }
 
     /**
      * Add a raw "order by" clause to the query.
+     *
+     * @param string $sql
+     * @param array $bindings
+     * @param bool $prepend
+     *
+     * @return static
      */
-    public function orderByRaw(string $sql, array $bindings = []): Builder
+    public function orderByRaw(string $sql, array $bindings = [], bool $prepend = false): Builder
     {
         $type = 'Raw';
 
-        $this->orders[] = compact('type', 'sql');
+        $func = $prepend ? 'array_unshift' : 'array_push';
+
+        $func($this->orders, compact('type', 'sql'));
 
         $this->addBinding($bindings, 'order');
 
