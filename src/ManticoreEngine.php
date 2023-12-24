@@ -74,7 +74,12 @@ class ManticoreEngine extends Engine
             'filter' => [$builder->wheres, $builder->whereIns],
             'limit' => $builder->limit,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
-        ]));
+        ], function ($value, $key) {
+            if ($key == 'limit') {
+                return $value || is_int($value);
+            }
+            return $value;
+        }, ARRAY_FILTER_USE_KEY));
     }
 
     /**
@@ -112,14 +117,14 @@ class ManticoreEngine extends Engine
 
         foreach ($searchParams['filter'] ?? [] as $filters) {
             foreach ($filters as $key => $value) {
-                $search->filter($key,'gte', $value);
+                $search->filter($key, 'gte', $value);
             }
         }
-        if ($searchParams['limit'] ?? false){
+        if (($limit = $searchParams['limit'] ?? false) || is_int($limit)) {
             $search->limit($searchParams['limit']);
         }
 
-        foreach ($searchParams['orderBy'] ?? [] as $sort){
+        foreach ($searchParams['orderBy'] ?? [] as $sort) {
             $search->sort(...$sort);
         }
 
@@ -145,7 +150,12 @@ class ManticoreEngine extends Engine
             'filter' => [$builder->wheres, $builder->whereIns],
             'limit' => $builder->limit,
             'orderBy' => $this->buildSortFromOrderByClauses($builder),
-        ]));
+        ], function ($value, $key) {
+            if ($key == 'limit') {
+                return $value || is_int($value);
+            }
+            return $value;
+        }, ARRAY_FILTER_USE_KEY));
     }
 
     /**
@@ -157,7 +167,7 @@ class ManticoreEngine extends Engine
      */
     public function mapIds($results)
     {
-        if (is_array($results) || is_null($results)){
+        if (is_array($results) || is_null($results)) {
             if (empty($results)) {
                 return collect();
             }
@@ -183,13 +193,13 @@ class ManticoreEngine extends Engine
      */
     public function map(Builder $builder, $results, $model): Collection
     {
-        if (is_array($results) || is_null($results)){
+        if (is_array($results) || is_null($results)) {
             if (empty($results)) {
                 return $model->newCollection();
             }
 
             $objectIds = collect($results)->pluck('_id')->all();
-        }else{
+        } else {
             if ($results->getTotal() === 0) {
                 return $model->newCollection();
             }
@@ -219,13 +229,13 @@ class ManticoreEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if (is_array($results) || is_null($results)){
+        if (is_array($results) || is_null($results)) {
             if (empty($results)) {
                 return LazyCollection::make($model->newCollection());
             }
 
             $objectIds = collect($results)->pluck('_id')->all();
-        }else{
+        } else {
             if ($results->getTotal() === 0) {
                 return LazyCollection::make($model->newCollection());
             }
@@ -253,11 +263,11 @@ class ManticoreEngine extends Engine
      */
     public function getTotalCount($results): int
     {
-        if (is_null($results)){
+        if (is_null($results)) {
             return 0;
         }
 
-        if (is_array($results) ){
+        if (is_array($results)) {
             return count($results);
         }
 
@@ -290,7 +300,7 @@ class ManticoreEngine extends Engine
     {
         $index = $this->manticore->index($name);
 
-        if (!array_key_exists('fields', $options)){
+        if (!array_key_exists('fields', $options)) {
             throw new \InvalidArgumentException('Manticore migration failed! Option key "fields" not found!');
         }
 
@@ -351,7 +361,7 @@ class ManticoreEngine extends Engine
      */
     protected function getMaxMatches(?int $max): int
     {
-        if (! is_null($this->options['max_matches'])) {
+        if (!is_null($this->options['max_matches'])) {
             return $this->options['max_matches'];
         }
 
