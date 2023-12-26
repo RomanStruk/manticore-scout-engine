@@ -85,7 +85,7 @@ class ManticoreMysqlEngine extends Engine
             $manticoreBuilder->orderBy($order['column'], $order['direction']);
         }
 
-        if ($builder->limit) {
+        if ($builder->limit || is_int($builder->limit)) {
             $manticoreBuilder->take($builder->limit);
         }
 
