@@ -11,8 +11,10 @@ abstract class TestCase extends BaseTestCase
 {
     use LazilyRefreshDatabase;
 
-    public function getEnvironmentSetUp($app)
+    protected function setUp(): void
     {
+        parent::setUp();
+
         include_once __DIR__ . '/stubs/create_products_table.php.stub';
         include_once __DIR__ . '/stubs/create_percolate_products_table.php.stub';
 
