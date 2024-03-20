@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 5
 
+### 5.6.3 (20.03.2024)
+- Fix performSearch filter params
+
 ### 5.5.0 (28.08.2023)
 - Percolate Query
 - Autocomplete `only mysql-builder`

@@ -79,7 +79,7 @@ class ManticoreEngine extends Engine
                 return $v || is_int($v);
             }
             return $v;
-        }, ARRAY_FILTER_USE_KEY));
+        }, ARRAY_FILTER_USE_BOTH));
     }
 
     /**
@@ -155,7 +155,7 @@ class ManticoreEngine extends Engine
                 return $v || is_int($v);
             }
             return $v;
-        }, ARRAY_FILTER_USE_KEY));
+        }, ARRAY_FILTER_USE_BOTH));
     }
 
     /**
