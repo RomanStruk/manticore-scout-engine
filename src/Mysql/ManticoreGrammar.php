@@ -27,7 +27,13 @@ class ManticoreGrammar extends Grammar
         'facets',
         'meta'
     ];
-
+    
+    public function wrapTable($table, $prefix = null)
+    {
+      $prefix = '';
+        
+      return parent::wrapTable($table,$prefix);
+    }
     /**
      * Compile a select query into SQL.
      */
