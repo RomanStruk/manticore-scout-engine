@@ -18,8 +18,7 @@ class HighlightTest extends TestCase
         Artisan::call('manticore:index', ['model' => Product::class]);
     }
 
-    /** @test */
-    public function it_highlight()
+    public function test_it_highlight()
     {
         $product1 = Product::factory()->create(['name' => 'My cat loves my dogs.']);
         $product2 = Product::factory()->create(['name' => 'Some dogs fly.']);
@@ -34,8 +33,7 @@ class HighlightTest extends TestCase
         $this->assertSame('Some <b>dogs</b> fly.', $searchable->getHighlight()[$product2->id]);
     }
 
-    /** @test */
-    public function it_highlight_before_after_match()
+    public function test_it_highlight_before_after_match()
     {
         Product::factory()->create(['name' => 'My cat loves my dogs.']);
 
@@ -47,8 +45,7 @@ class HighlightTest extends TestCase
         $this->assertSame('My cat loves my [match]dogs[/match].', $searchable['hits'][0]['highlight']);
     }
 
-    /** @test */
-    public function it_highlight_different_words()
+    public function test_it_highlight_different_words()
     {
         $this->app['config']->set('manticore.auto_escape_search_phrase', false);
 
@@ -62,8 +59,7 @@ class HighlightTest extends TestCase
         $this->assertSame('My <b>cat</b> loves my <b>dogs</b>.', $searchable['hits'][0]['highlight']);
     }
 
-    /** @test */
-    public function it_highlight_query()
+    public function test_it_highlight_query()
     {
         $this->app['config']->set('manticore.auto_escape_search_phrase', false);
 
@@ -77,8 +73,7 @@ class HighlightTest extends TestCase
         $this->assertSame('My cat loves my <b>dogs</b>.', $searchable['hits'][0]['highlight']);
     }
 
-    /** @test */
-    public function it_highlight_two_fields()
+    public function test_it_highlight_two_fields()
     {
         $this->app['config']->set('manticore.auto_escape_search_phrase', false);
 

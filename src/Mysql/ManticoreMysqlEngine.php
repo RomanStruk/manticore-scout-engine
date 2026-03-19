@@ -73,8 +73,8 @@ class ManticoreMysqlEngine extends Engine
             ->index($builder->index ?: $builder->model->searchableAs())
             ->search($builder->query);
 
-        foreach ($builder->wheres as $field => $values) {
-            $manticoreBuilder->where($field, '=', $values, 'and');
+        foreach ($builder->wheres as $where) {
+            $manticoreBuilder->where($where['field'], $where['operator'], $where['value'], 'and');
         }
 
         foreach ($builder->whereIns as $field => $values) {
@@ -142,8 +142,8 @@ class ManticoreMysqlEngine extends Engine
             ->take($perPage)
             ->offset($offset);
 
-        foreach ($builder->wheres as $field => $values) {
-            $manticoreBuilder->where($field, '=', $values, 'and');
+        foreach ($builder->wheres as $where) {
+            $manticoreBuilder->where($where['field'], $where['operator'], $where['value'], 'and');
         }
 
         foreach ($builder->whereIns as $field => $values) {

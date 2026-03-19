@@ -18,8 +18,7 @@ class PercolateTest extends TestCase
         Artisan::call('manticore:index', ['model' => PercolateProduct::class]);
     }
 
-    /** @test */
-    public function it_match_my_single_document()
+    public function test_it_match_my_single_document()
     {
         PercolateProduct::factory()->create(['title' => 'bag']);
         $shoes = PercolateProduct::factory()->create(['title' => 'shoes', 'color' => null]);
@@ -32,8 +31,7 @@ class PercolateTest extends TestCase
         $this->assertSame($shoes->id, $searchable[0]->id);
     }
 
-    /** @test */
-    public function it_match_my_single_json_document()
+    public function test_it_match_my_single_json_document()
     {
         PercolateProduct::factory()->create(['title' => 'bag']);
         $shoes = PercolateProduct::factory()->create(['title' => 'shoes', 'color' => null]);
@@ -46,8 +44,7 @@ class PercolateTest extends TestCase
         $this->assertSame($shoes->id, $searchable[0]->id);
     }
 
-    /** @test */
-    public function it_match_my_single_filtered_json_document()
+    public function test_it_match_my_single_filtered_json_document()
     {
         PercolateProduct::factory()->create(['title' => 'bag']);
         $whiteBag = PercolateProduct::factory()->create(['title' => 'bag', 'color' => 'white']);

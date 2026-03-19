@@ -22,8 +22,7 @@ class TableJoinsTest extends TestCase
         Artisan::call('manticore:index', ['model' => Product::class]);
     }
 
-    /** @test */
-    public function it_join_table()
+    public function test_it_join_table()
     {
         $category = Category::factory()->create(['name' => 'Animals']);
 
@@ -43,8 +42,7 @@ class TableJoinsTest extends TestCase
         $this->assertSame($category->name, $searchable['hits'][1]['category_name']);
     }
 
-    /** @test */
-    public function it_join_table_with_search()
+    public function test_it_join_table_with_search()
     {
         $category = Category::factory()->create(['name' => 'Animals']);
 
@@ -65,8 +63,7 @@ class TableJoinsTest extends TestCase
         $this->assertSame($category->name, $searchable['hits'][1]['category_name']);
     }
 
-    /** @test */
-    public function it_left_join_table()
+    public function test_it_left_join_table()
     {
         $category = Category::factory()->create(['name' => 'Animals']);
 

@@ -17,8 +17,7 @@ class IndexTest extends TestCase
         Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
     }
 
-    /** @test */
-    public function it_create_manticore_index()
+    public function test_test_it_create_manticore_index()
     {
         Artisan::call('manticore:index', ['model' => Product::class]);
 
@@ -32,8 +31,7 @@ class IndexTest extends TestCase
         }
     }
 
-    /** @test */
-    public function it_replace_document_by_id()
+    public function test_it_replace_document_by_id()
     {
         Artisan::call('manticore:index', ['model' => Product::class]);
 
@@ -52,8 +50,7 @@ class IndexTest extends TestCase
         Artisan::call('scout:delete-index', ['name' => app(Product::class)->searchableAs()]);
     }
 
-    /** @test */
-    public function it_delete_document()
+    public function test_it_delete_document()
     {
         Artisan::call('manticore:index', ['model' => Product::class]);
 

@@ -19,8 +19,7 @@ class GroupingTest extends TestCase
         Artisan::call('manticore:index', ['model' => Product::class]);
     }
 
-    /** @test */
-    public function it_group_by_field()
+    public function test_it_group_by_field()
     {
         Product::factory()->create(['category_id' => 1]);
         Product::factory()->create(['category_id' => 1]);
@@ -37,8 +36,7 @@ class GroupingTest extends TestCase
         $this->assertCount(4, $searchable);
     }
 
-    /** @test */
-    public function it_group_by_multiple_fields()
+    public function test_it_group_by_multiple_fields()
     {
         Product::factory()->create(['category_id' => 1, 'brand_name' => 'brand1']);
         Product::factory()->create(['category_id' => 1, 'brand_name' => 'brand2']);
@@ -55,8 +53,7 @@ class GroupingTest extends TestCase
         $this->assertCount(6, $searchable);
     }
 
-    /** @test */
-    public function it_group_n_by()
+    public function test_it_group_n_by()
     {
         Product::factory()->create(['category_id' => 1]);
         Product::factory()->create(['category_id' => 1]);
@@ -74,8 +71,7 @@ class GroupingTest extends TestCase
         $this->assertCount(6, $searchable);
     }
 
-    /** @test */
-    public function it_sorting_group_by()
+    public function test_it_sorting_group_by()
     {
         Product::factory()->create(['category_id' => 1]);
         Product::factory()->create(['category_id' => 1]);
@@ -99,8 +95,7 @@ class GroupingTest extends TestCase
         $this->assertSame(1, $searchable[3]->id);
     }
 
-    /** @test */
-    public function it_group_by_within_order_by_desc()
+    public function test_it_group_by_within_order_by_desc()
     {
         Product::factory()->create(['category_id' => 1, 'brand_name' => '1']);
         Product::factory()->create(['category_id' => 1, 'brand_name' => '2']);
@@ -132,8 +127,7 @@ class GroupingTest extends TestCase
         $this->assertSame($searchable[3]['brand_name'], '2');
     }
 
-    /** @test */
-    public function it_group_by_within_order_by_asc()
+    public function test_it_group_by_within_order_by_asc()
     {
         Product::factory()->create(['category_id' => 1, 'brand_name' => '1']);
         Product::factory()->create(['category_id' => 1, 'brand_name' => '2']);

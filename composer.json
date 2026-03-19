@@ -11,16 +11,16 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "~12",
+        "php": "^8.3",
+        "illuminate/support": "~13",
         "manticoresoftware/manticoresearch-php": "^3.0",
-        "laravel/scout": "^10.0",
+        "laravel/scout": "^11.0",
         "ext-pdo": "*",
         "ext-json": "*"
     },
     "require-dev": {
-        "orchestra/testbench": "^10.0",
-        "phpunit/phpunit": "^11.5.3"
+        "orchestra/testbench": "^11.0",
+        "phpunit/phpunit": "^12.5.12"
     },
     "autoload": {
         "psr-4": {

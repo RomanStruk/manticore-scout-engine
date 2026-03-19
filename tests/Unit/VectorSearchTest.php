@@ -18,10 +18,10 @@ class VectorSearchTest extends TestCase
         Artisan::call('manticore:index', ['model' => SimilarProduct::class]);
     }
 
-    /** @test */
-    public function it_create_record_with_correct_vector()
+
+    public function test_it_create_record_with_correct_vector()
     {
-        $vector = [0.653448,0.192478,0.017971,0.339821];
+        $vector = [0.653448, 0.192478, 0.017971, 0.339821];
         SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => $vector]);
 
         $searchable = SimilarProduct::search('foo')->raw()['hits'][0]['vector'];
@@ -29,11 +29,15 @@ class VectorSearchTest extends TestCase
         $this->assertSame($searchable, implode(',', $vector));
     }
 
-    /** @test */
-    public function it_knn_vector_search()
+
+    public function test_it_knn_vector_search()
     {
-        $expected1 = SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => [0.653448,0.192478,0.017971,0.339821]]);
-        $expected2 = SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => [-0.148894,0.748278,0.091892,-0.095406]]);
+        $expected1 = SimilarProduct::factory()->create([
+            'name' => 'Foo Bar', 'vector' => [0.653448, 0.192478, 0.017971, 0.339821],
+        ]);
+        $expected2 = SimilarProduct::factory()->create([
+            'name' => 'Foo Bar', 'vector' => [-0.148894, 0.748278, 0.091892, -0.095406],
+        ]);
 
         $searchable = SimilarProduct::search('', function (Builder $q) {
             return $q->whereRaw("knn ( vector, 5, (0.286569,-0.031816,0.066684,0.032926), 2000 )");
@@ -43,11 +47,13 @@ class VectorSearchTest extends TestCase
         $this->assertSame($searchable[1]->id, $expected2->id);
     }
 
-    /** @test */
-    public function it_find_similar_docs_by_id()
+
+    public function test_it_find_similar_docs_by_id()
     {
-        SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => [0.653448,0.192478,0.017971,0.339821]]);
-        $expected = SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => [-0.148894,0.748278,0.091892,-0.095406]]);
+        SimilarProduct::factory()->create(['name' => 'Foo Bar', 'vector' => [0.653448, 0.192478, 0.017971, 0.339821]]);
+        $expected = SimilarProduct::factory()->create([
+            'name' => 'Foo Bar', 'vector' => [-0.148894, 0.748278, 0.091892, -0.095406],
+        ]);
 
         $searchable = SimilarProduct::search('', function (Builder $q) {
             return $q->whereRaw("knn ( vector, 5, 1 )")->discardMeta();

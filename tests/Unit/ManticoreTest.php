@@ -19,8 +19,7 @@ class ManticoreTest extends TestCase
         Artisan::call('manticore:index', ['model' => Product::class]);
     }
 
-    /** @test */
-    public function it_search_by_word()
+    public function test_it_search_by_word()
     {
         $expected = Product::factory()->create(['name' => 'secret word']);
 
@@ -29,8 +28,7 @@ class ManticoreTest extends TestCase
         $this->assertSame($searchable->id, $expected->id);
     }
 
-    /** @test */
-    public function it_select_facets()
+    public function test_it_select_facets()
     {
         Product::factory()->create(['category_id' => 1]);
         Product::factory()->create(['category_id' => 3]);
@@ -62,8 +60,7 @@ class ManticoreTest extends TestCase
         $this->assertCount(9, $searchable);
     }
 
-    /** @test */
-    public function it_order_by_random()
+    public function test_it_order_by_random()
     {
         Product::factory()->create();
         Product::factory()->create();
@@ -79,8 +76,7 @@ class ManticoreTest extends TestCase
         $this->assertTrue($searchable1->id != $searchable2->id);
     }
 
-    /** @test */
-    public function it_order_by_raw()
+    public function test_it_order_by_raw()
     {
         Product::factory()->create(['name' => 'Officiis quidem sint ex omnis sint. Debitis atque eum modi similique sunt neque laudantium perspiciatis. Modi ipsa aut commodi et sunt non amet']);
         Product::factory()->create(['name' => 'Atque sed aut adipisci odio magnam. Offical in veniam minus et.']);
@@ -90,8 +86,7 @@ class ManticoreTest extends TestCase
         $this->assertCount(2, $searchable);
     }
 
-    /** @test */
-    public function it_group_by_field()
+    public function test_it_group_by_field()
     {
         Product::factory()->create(['category_id' => 1]);
         Product::factory()->create(['category_id' => 1]);
@@ -107,8 +102,7 @@ class ManticoreTest extends TestCase
         $this->assertTrue($searchable1->count() == 2);
     }
 
-    /** @test */
-    public function it_count_distinct_facet()
+    public function test_it_count_distinct_facet()
     {
         Product::factory()->create(['brand_name' => 'Brand Nine', 'property' => 'Four']);
         Product::factory()->create(['brand_name' => 'Brand Ten', 'property' => 'Four']);
@@ -151,8 +145,7 @@ class ManticoreTest extends TestCase
         $this->assertSame(2, $facets->firstWhere('key', 'Brand Ten')['distinct']);
     }
 
-    /** @test */
-    public function it_count_expressions_facet()
+    public function test_it_count_expressions_facet()
     {
         Product::factory()->create(['brand_name' => 'Brand Nine', 'price' => 200]);
         Product::factory()->create(['brand_name' => 'Brand Ten', 'price' => 200]);
@@ -171,9 +164,8 @@ class ManticoreTest extends TestCase
         $this->assertSame(1, $facets->firstWhere('brand_name', 'Brand Ten')['count']);
         $this->assertSame(2, $facets->firstWhere('brand_name', 'Brand One')['count']);
     }
-
-    /** @test */
-    public function it_will_only_match_those_documents_that_pass_a_given_threshold_of_given_words()
+    
+    public function test_it_will_only_match_those_documents_that_pass_a_given_threshold_of_given_words()
     {
         Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies']);
         Product::factory()->create(['name' => 'Charging strip apple iphone x microphone a1901']);
@@ -194,9 +186,8 @@ class ManticoreTest extends TestCase
 
         $this->assertSame(3, $searchable->count());
     }
-
-    /** @test */
-    public function it_will_match_proximity_search_operator()
+    
+    public function test_it_will_match_proximity_search_operator()
     {
         Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
         Product::factory()->create(['name' => 'Charging strip apple iphone x microphone a1901', 'description' => '']);
@@ -216,8 +207,7 @@ class ManticoreTest extends TestCase
         $this->assertSame(1, $searchable->count());
     }
 
-    /** @test */
-    public function it_can_switch_escaping()
+    public function test_it_can_switch_escaping()
     {
         Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
 
@@ -235,8 +225,7 @@ class ManticoreTest extends TestCase
         $this->assertSame(1, $searchableWithEscaping->count());
     }
 
-    /** @test */
-    public function it_throw_escaping_exception()
+    public function test_it_throw_escaping_exception()
     {
         Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
 
@@ -246,8 +235,7 @@ class ManticoreTest extends TestCase
         Product::search('smartphone "Apple')->get();
     }
 
-    /** @test */
-    public function it_avoid_throw_escaping_exception()
+    public function test_it_avoid_throw_escaping_exception()
     {
         Product::factory()->create(['name' => 'Smartphone Apple Iphone X 64GB Freebies', 'description' => '']);
 
@@ -258,8 +246,7 @@ class ManticoreTest extends TestCase
         $this->assertSame(1, $searchable->count());
     }
 
-    /** @test */
-    public function it_avoid_throw_escaping_exception_with_where()
+    public function test_it_avoid_throw_escaping_exception_with_where()
     {
         Product::factory()->create(['brand_name' => 'apple']);
         Product::factory()->create(['brand_name' => 'hp']);
