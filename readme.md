@@ -1,5 +1,8 @@
 # Manticore Scout Engine
 [![Release](https://img.shields.io/github/v/release/RomanStruk/manticore-scout-engine?style=flat-square)](https://github.com/RomanStruk/manticore-scout-engine/releases)
+[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua/)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/romanstruk)
 
 Manticore Engine for Laravel Scout
 
@@ -35,7 +38,7 @@ MANTICORE_ENGINE=http-client
 ### Configuring Driver Connection
 For `http-client` in `.env` file
 ```dotenv
-MANTICORE_HOST=localhost
+MANTICORE_HOST=127.0.0.1
 MANTICORE_PORT=9308
 ```
 For `mysql-builder` in `.env` file
@@ -115,6 +118,7 @@ $products = Product::search('Brand Name', function (Builder $builder) {
 })->get();
 ```
 
+### Quorum matching operator ###
 Quorum matching operator introduces a kind of fuzzy matching. It will only match those documents that pass a given threshold of given words. The example above ("the world is a wonderful place"/3) will match all documents that have at least 3 of the 6 specified words.
 ```php
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
@@ -133,6 +137,7 @@ $products = Product::search('cat dog mouse', function (Builder $builder) {
 })->get();
 ```
 
+### Autocomplete ###
 Autocomplete (or word completion) is a feature in which an application predicts the rest of a word a user is typing. On websites, it's used in search boxes, where a user starts to type a word, and a dropdown with suggestions pops up so the user can select the ending from the list.
 ```php
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
@@ -145,7 +150,7 @@ $autocomplete = Product::search('my*',function (Builder $builder) {
 // $autocomplete<array> "my", "my cat", "my dog"
 ```
 
-Spell correction
+### Spell correction ###
 ```php
 use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 
@@ -202,6 +207,50 @@ use RomanStruk\ManticoreScoutEngine\Mysql\Builder;
 $products = PercolateProduct::search(json_encode(['title' =>'Beautiful shoes']),
     fn(Builder $builder) => $builder->percolateQuery(docs: true, docsJson: true)
 )->get();
+```
+
+### KNN ###
+K-nearest neighbor vector search
+https://manual.manticoresearch.com/Searching/KNN#K-nearest-neighbor-vector-search
+
+Added the ability to create records with the `float_vector` field type
+```php
+use RomanStruk\ManticoreScoutEngine\Mysql\ManticoreVector;
+
+public function scoutIndexMigration(): array
+{
+    return [
+        'fields' => [
+            'id' => ['type' => 'bigint'],
+            'name' => ['type' => 'text'],
+            'vector' => ['type' => "float_vector knn_type='hnsw' knn_dims='4' hnsw_similarity='l2'"],
+        ],
+        'settings' => [],
+    ];
+}
+
+
+public function toSearchableArray(): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'vector' => new ManticoreVector(...$this->vector), // $this->vector is array
+    ];
+}
+```
+
+Currently, the implementation is only available using `whereRaw`.
+```php
+$results = SimilarProduct::search('bar', function (Builder $query) {
+    return $query->whereRaw("knn ( vector, 5, (0.286569,-0.031816,0.066684,0.032926), 2000 )");
+})->get();
+```
+Please note that when using the "Find similar docs by id" syntax, you need to discard meta `discardMeta()`. Exact information about the number of results is not available
+```php
+$results = SimilarProduct::search('foo', function (Builder $query) {
+    return $query->whereRaw("knn ( vector, 5, 1 )")->discardMeta();
+})->get();
 ```
 
 ## Change log

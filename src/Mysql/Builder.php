@@ -125,17 +125,19 @@ class Builder
     /**
      * Set the search which the query is targeting.
      */
-    public function search($search = ''): Builder
+    public function search(?string $search = ''): Builder
     {
-        $this->search = $search;
+        $this->search = strval($search);
 
-        if (!empty($this->search)) {
-            if ($this->autoEscaping){
-                $search = $this->grammar->escape($search);
-            }
-
-            $this->addBinding($search, 'search');
+        if ($this->search === '') {
+            return $this;
         }
+
+        if ($this->autoEscaping) {
+            $search = $this->grammar->escape($search);
+        }
+
+        $this->addBinding($search, 'search');
 
         return $this;
     }
@@ -473,12 +475,13 @@ class Builder
      */
     public function groupBy(...$groups): Builder
     {
+        $newGroups = [];
+
         foreach ($groups as $group) {
-            $this->groups = array_merge(
-                $this->groups,
-                Arr::wrap($group)
-            );
+            $newGroups[] = Arr::wrap($group);
         }
+
+        $this->groups = array_merge($this->groups, ...$newGroups);
 
         return $this;
     }
@@ -658,7 +661,7 @@ class Builder
         $this->bindings['search'] = [];
         $this->addBinding($this->search, 'search');
 
-        $this->meta = false;
+        $this->discardMeta();
 
         return $this;
     }
@@ -676,9 +679,19 @@ class Builder
     /**
      * Init the "meta" information.
      */
-    protected function meta(): Builder
+    public function meta(): Builder
     {
         $this->meta = true;
+
+        return $this;
+    }
+
+    /**
+     * Discard "meta" information.
+     */
+    public function discardMeta(): Builder
+    {
+        $this->meta = false;
 
         return $this;
     }

@@ -109,7 +109,7 @@ class ManticoreGrammar extends Grammar
             return '';
         }
 
-        return 'where match(?)';
+        return 'where match(?, '.$query->index.')';
     }
 
     /**
@@ -643,6 +643,8 @@ class ManticoreGrammar extends Grammar
     {
         $cleanBindings = Arr::except($bindings, ['search']);
 
+        $values = array_filter($values, fn ($value) => !($value instanceof ManticoreVector));
+
         return array_values(
             array_merge(Arr::flatten($values), Arr::flatten($cleanBindings))
         );
@@ -677,7 +679,17 @@ class ManticoreGrammar extends Grammar
     protected function compileReplaceValues(Builder $query, array $values): string
     {
         return collect($values)
-            ->map(fn($value) => is_array($value) ? $this->compileReplaceMvaValues($value) : '?')
+            ->map(function ($value){
+                if ($value instanceof ManticoreVector) {
+                    return $value->toSql();
+                }
+
+                if (is_array($value)) {
+                    return $this->compileReplaceMvaValues($value);
+                }
+
+                return '?';
+            })
             ->implode(', ');
     }
 
