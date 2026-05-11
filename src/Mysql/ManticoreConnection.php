@@ -57,7 +57,7 @@ class ManticoreConnection
             return [
                 'hits' => $result[0],
                 'facets' => $grammar->formatFacets(array_slice($result, 1, $countRowSet - 2)),
-                'meta' => $withMeta ? $grammar->formatMeta($result[$countRowSet - 1]) : [],
+                'meta' => $withMeta ? $grammar->formatMeta($result[$countRowSet - 1]) : ['total' => count($result[0])],
             ];
         });
     }

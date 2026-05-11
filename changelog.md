@@ -4,6 +4,9 @@ All notable changes to `romanstruk/manticore-scout-engine` will be documented in
 
 ## Version 4
 
+### 4.7.0 (11.05.2026)
+- K-nearest neighbor vector search
+
 ### 4.6.0 (28.08.2023)
 - Percolate Query
 - Autocomplete `only mysql-builder`
